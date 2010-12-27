@@ -1,0 +1,9 @@
+-*-text-*-
+
+I'd rather write programs that write programs, then write programs.
+    -Larry Wall
+
+"Lisp programmers can, and often do, write programs to write their programs for them.  
+Lisp is the only major language in which this is a routinely used technique, because
+Lisp is the only major language to provide the abstractions that make it convenient".
+     -Paul Graham, "ANSI Common LISP".

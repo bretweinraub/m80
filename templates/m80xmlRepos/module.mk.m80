@@ -1,0 +1,16 @@
+#
+# Do not delete.
+#
+
+export M80_REPOSITORY_TYPE=xml
+
+#
+# SUPPRESS_M80 flag restricts the loading of the m80 environment inside
+# of the runPath/embedperl programs.  This is important since by default
+# the loading of the m80 environment (via the m80loader library) attempts
+# to build the m80 repository, which creates an infinite loop (bad).
+#
+
+export SUPPRESS_M80=true
+
+

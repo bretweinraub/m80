@@ -1,0 +1,11 @@
+SUBDIRS = db env
+
+# see the comments in $(top_srcdir)/autofiles/libs.mk
+# 
+# make 'installpathtest' will show you the destination path
+
+include $(top_srcdir)/autofiles/libs.mk
+include $(top_srcdir)/autofiles/generic.mk
+
+pkgdata_DATA = $(wildcard *.sh) $(wildcard *.m4)
+EXTRA_DIST = $(wildcard *.m4) $(wildcard *.sh) $(wildcard *.FAQ) 

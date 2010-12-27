@@ -1,0 +1,17 @@
+psql:dbBase.sql:19: NOTICE:  Drop cascades to constraint m80patchlog_fk01 on table m80patchlog
+DROP TABLE
+psql:dbBase.sql:26: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'm80moduleversion_pk' for table 'm80moduleversion'
+CREATE TABLE
+DROP TABLE
+psql:dbBase.sql:41: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'm80patchlog_pk' for table 'm80patchlog'
+psql:dbBase.sql:41: NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+CREATE TABLE
+psql:dbBase.sql:43: ERROR:  table "dual" does not exist
+CREATE TABLE
+INSERT 18499 1
+BEGIN
+DELETE 0
+INSERT 18500 1
+COMMIT
+DROP TABLE
+CREATE TABLE

@@ -1,0 +1,351 @@
+#! /bin/bash
+#
+# M80 ---- see the License file for restrictions
+#
+
+
+
+PROGNAME=${0##*/}
+TMPFILE=/tmp/${PROGNAME}.$$
+
+if [ -n "${DEBUG}" ]; then	
+	set -x
+fi
+
+PSCMD="ps axc"  
+
+
+
+
+
+
+
+
+#
+# $Header: /cvsroot/m80/m80/lib/shell/printmsg.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+#
+# Function:	printmsg
+#
+# Description:	generic error reporting routine.
+#               BEWARE, white space is stripped and replaced with single spaces
+#
+# Call Signature:
+#
+# Side Effects:
+#
+# Assumptions:
+#
+
+printmsg () {
+    if [ -z "${QUIET}" ]; then 
+	if [ $# -ge 1 ]; then
+	    /bin/echo -n ${M80_OVERRIDE_DOLLAR0:-$PROGNAME}:\($$\) >&2
+		while [ $# -gt 0 ]; do /bin/echo -n " "$1 >&2 ; shift ; done
+		if [ -z "${M80_SUPRESS_PERIOD}" ]; then
+		    echo . >&2
+		else
+		    echo >&2
+		fi
+	fi
+    fi
+}
+
+
+#
+# Function:	cleanup
+#
+# Description:	generic KSH funtion for the end of a script
+#
+# History:	02.22.2000	bdw	passed error code through to localclean
+#
+# $Id: cleanup.sh,v 1.2 2004/04/06 22:42:02 bretweinraub Exp $
+#
+
+cleanup () {
+    export EXITCODE=$1
+    shift
+    if [ $# -gt 0 ]; then
+	printmsg $*
+    fi
+    if [ -n "${DQITMPFILE}" ]; then
+	rm -f ${DQITMPFILE}
+    fi
+    if [ -n "${LOCALCLEAN}" ]; then
+	localclean ${EXITCODE} # this function must be set
+    fi
+    if [ ${EXITCODE} -ne 0 ]; then
+	# this is an error condition
+	printmsg exiting with error code ${EXITCODE}
+    else
+	printmsg done
+    fi
+    exit ${EXITCODE}
+}
+
+trap "cleanup 1 caught signal" INT QUIT TERM HUP 2>&1 > /dev/null
+
+
+#
+# Function:	docmd
+#
+# Description:	a generic wrapper for ksh functions
+#
+# $Id: docmd.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+docmd () {
+    if [ $# -lt 1 ]; then
+	return
+    fi
+    #print ; eval "echo \* $*" ; print
+    eval "echo '$*'"
+    eval $*
+    RETURNCODE=$?
+    if [ $RETURNCODE -ne 0 ]; then
+	cleanup $RETURNCODE command \"$*\" returned with error code $RETURNCODE
+    fi
+    return 0
+}
+
+
+#
+# Function:	docmdi
+#
+# Description:	execute a command, but ignore the error code
+#
+# $Id: docmdi.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+docmdi () {
+    if [ $# -lt 1 ]; then
+	return
+    fi
+#    print ; eval "echo \* $*" ; print
+    eval "echo '$*'"
+    eval $*
+    export RETURNCODE=$?
+    if [ $RETURNCODE -ne 0 ]; then
+	printmsg command \"$*\" returned with error code $RETURNCODE, ignored
+    fi
+    return $RETURNCODE
+}
+
+
+#
+# Function:	docmdqi
+#
+# Description:	execute a command quietly, but ignore the error code
+#
+# $Id: docmdqi.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+#
+
+docmdqi () {
+    if [ $# -lt 1 ]; then return; fi
+    DQITMPFILE=/tmp/${PROGNAME}.$$.dcmdqi
+    eval $* 2>&1 > ${DQITMPFILE}
+    export RETURNCODE=$?
+    if [ ${RETURNCODE} -ne 0 ]; then
+	cat ${DQITMPFILE} >&2
+    fi
+    rm -f ${DQITMPFILE}
+    return $RETURNCODE
+}
+
+
+function pd_usage {
+    export PD_FLAGS=-T
+    export PD_DIRS=`dirname $0`
+    pd `basename $0 .sh`
+}
+
+
+
+#any code placed here will be included into script exithandler
+#by default the exit handler is called on INT QUIT TERM HUP
+#and by the "cleanup" shell function
+
+LOCALCLEAN=true
+localclean () {
+    rm -f /tmp/${PROGNAME}.$$*
+    
+}
+
+
+function dprint {
+    test -n "$debug" && printmsg $*
+}
+
+erase=''
+test=''
+debug=''
+path=.
+wiki_url=http://www.renwix.com/m80/pmwiki.php
+namespace=Tools
+filemask='s/(\.sh\.m4|\.m4)$//'
+author=$USER
+
+poplist=0
+OPTIND=0 # required in bash
+while getopts :dtehp:u:n:f:a: c
+  do case $c in
+      h)  pd_usage; exit 1;;
+      e)  erase="true"; ((poplist=$poplist+1));;
+      d)  debug="true"; ((poplist=$poplist+1));;
+      t)  test="true"; ((poplist=$poplist+1));;
+      p)  path=$OPTARG; ((poplist=$poplist+2));;
+      u)  wiki_url=$OPTARG; ((poplist=$poplist+2));;
+      n)  namespace=$OPTARG; ((poplist=$poplist+2));;
+      f)  filemask=$OPTARG; ((poplist=$poplist+2));;
+      a)  author=$OPTARG; ((poplist=$poplist+2));;
+      :)  echo $OPTARG requires a value;;
+      \?) echo unknown option $OPTARG;;
+  esac
+done
+
+while test $poplist -ne 0; do
+    dprint "popping $1"
+    shift
+    ((poplist=$poplist-1))
+done
+
+
+tmpdir=/tmp/$PROGNAME.$$;
+dprint "DEBUG: TMPDIR=$tmpdir  .."
+dprint "DEBUG: path=$path  .."
+dprint "DEBUG: wiki_url=$wiki_url  .."
+dprint "DEBUG: namespace=$namespace  .."
+dprint "DEBUG: filemask=$filemask  .."
+dprint "DEBUG: test=$test  .."
+dprint "DEBUG: erase=$erase  .."
+mkdir -p $tmpdir
+
+# ERASE ASSERT
+if test -n "$erase"; then
+    printmsg "You are about to delete a bunch of WIKI files from $wiki_url. Are you sure this is what you want? Y/N"
+    read line
+    if test "$line" != "Y"; then
+        printmsg "ok"
+        exit 0
+    fi
+fi
+    
+
+for f in $(ls $path | perl -nle "print if $filemask"); do
+    output_root=$(echo $f | perl -ple 's/^(.+?)\..+$/$1/')
+    output=$tmpdir/$output_root.wiki
+    if test -z "$erase"; then
+        dprint "Creating $output from $path/$f "
+        test -f $path/$f && {
+            cat $path/$f | grep -v '\-\-start =pod' | textblock.pl --start =pod --end =cut --no-comments --preserve | pod2wiki > $output
+
+            if test -n "$(grep 'POD ERRORS' $output | grep -v grep)"; then
+                printmsg "errors in the pod conversion. look at $output"
+                exit 2
+            fi
+
+            test -s $output && {
+                dprint "uploading $output"
+                dprint curl -s -F 'action=edit' \
+                    -F "pagename=$namespace.$output_root" \
+                    -F "text=<$output" \
+                    -F "author=$author" \
+                    -F 'post= Save ' \
+                    $wiki_url?n=$namespace.$output_root?action=edit \> $output.curl
+                test -z "$test" && {
+                    curl -s -F 'action=edit' \
+                        -F "pagename=$namespace.$output_root" \
+                        -F "text=<$output" \
+                        -F "author=$author" \
+                        -F 'post= Save ' \
+                        $wiki_url?n=$namespace.$output_root?action=edit > $output.curl
+                    if test $? -ne 0; then
+                        echo "Upload error!"
+                        exit 10
+                    fi
+                }
+            }
+        }
+    else
+        printmsg "Erasing $output_root"
+        curl -s -F 'action=edit' \
+            -F "pagename=$namespace.$output_root" \
+            -F "text=delete" \
+            -F "author=$author" \
+            -F 'post= Save ' \
+            $wiki_url?n=$namespace.$output_root?action=edit > $output_root.curl
+    fi
+done
+
+
+exit 0
+
+
+
+#
+# =pod
+#
+# =head1 NAME
+#
+# pd2pmwiki_import - turn pd docs into wiki entries in a pmwiki
+#
+# =head2 SYNOPSIS
+# 
+# pd2pmwiki_import [ -h -d -t ] [ -e ] [ -p <dir> -u <url> -n <groupname> -f <filemask> -a <author> ]
+# 
+# =over 4
+# 
+# =item -h
+# 
+# help - print this information
+# 
+# =item -e
+# 
+# erase - for each file in the directory, delete the corresponding wiki article
+# 
+# =item -d
+# 
+# debug - print debug information
+# 
+# =item -t
+# 
+# test - print the actions that will run, but do not run them
+# 
+# =item -p
+# 
+# path - the directory that contains the files that should be used as source. Default is "."
+# 
+# =item -u
+# 
+# url to the pmwiki.php page. Default is "http://www.renwix.com/m80/pmwiki.php"
+# 
+# =item -n
+# 
+# namespace - All scripts are assumed to be part of a pmwiki group. This is the groupname and
+# the default is "Tools"
+# 
+# =item -f
+# 
+# filemask - a perl regexp that determines what files to use as the source in the 
+# directory that is being posted. Default is C<"s/(\.sh\.m4|\.m4)$//">
+# 
+# =item -a
+# 
+# author - default is $USER
+# 
+# =back
+# 
+# =head1 DESCRIPTION
+# 
+# This will generate wiki (wikiwikiweb compatible) pages for all files in a directory that match
+# a particular filemask. Then it will attempt to import those generated files into a pmwiki.
+# 
+# It has functionality to allow deletions based on the list of files matching a filemask in a 
+# directory.
+# 
+# =cut 
+# 
+
+#
+# Local Variables:
+# mode: shell-script
+# End:
+# 
+

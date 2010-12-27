@@ -1,0 +1,48 @@
+  <tasks>
+    <task name="pushFramework"
+	  requiredData="$(task.LRControllerUser) $(task.LRController) $(task.NetConfigDir) $(task.NetConfigFile) "
+	  startAction="convertPaths">
+    </task>
+
+    <task name="send-ssh-keys"
+	  requiredData="$(task.LRControllerUser) $(task.LRController) $(task.NetConfigDir) $(task.NetConfigFile)"
+	  startAction="fetchNetConfig">
+    </task>
+  </tasks>
+  
+  <actions>
+    <!-- Actions Related to pushFramework -->
+
+    <action name="syncFramework"
+	    isTransactional="true"
+	    maxFailures="5"
+	    command="(cd $(env.FRAMEWORK_P4_MAP) ; p4 sync ...)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(pushFramework))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="pushFramework"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.FrameworkUtilDir) ; make -f Makefile.control pushFramework)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(__SUCCESS__))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <!-- Actions Related to pushFramework -->
+
+    <action name="post-fetchNetConfig-send-ssh-keys"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.FrameworkUtilDir) ; make -f Makefile.control send-ssh-keys)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(__SUCCESS__))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+  </actions>

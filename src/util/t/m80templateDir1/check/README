@@ -1,0 +1,89 @@
+        
+
+=pod
+
+=head1 MODULE / PACKAGE DEFINITON
+
+The files in this directory represent a "Module" - which is a 
+"package of stuff that is deployed together". In this case, this
+is the template for a State Machine module. This is a block of 
+code that will be executed by the "State Machine" component.
+
+This is only a skeleton representation of a module. It is implemented
+as an m80 template and inherits that set of functionality. 
+
+=head1 DSL HIERARCHY DESCRIPTION
+
+This module template has some placeholders for Module wide and Module
+specific "Domain Specific Languages". In this case the languages are
+implemented as Macros in external m80 embeddedperl macro libraries.
+
+The DSL hierarchy is:
+
+- metadata/objects & metadata/collections (structure and data)
+
+- metadata/templates (skeletal representation of module pattern)
+
+- mymodule/localDSL.pm (perl macros custom to this module)
+
+- mymodule/localDSL.m4 (m4 macros custom to this module)
+
+The localDSL.* files should require the global metadata/objects, collections
+and the code in the module should require the localDSL.* files. The skeletal
+Makefile embodies this pattern, so make based expansion of files in this
+module will inherit this call stack.
+
+=head1 TEMPLATE IMPLEMENTATION
+
+=over 4
+
+=item module.xml
+
+This is the State Machine definition. The skeleton is implemented as module.xml.m80 which
+encapsulates the patterns we know about ALL state machine modules. Today that knowledge is
+that they will have tasks and actions. Those tasks and actions are then defined in external
+files that are included during deployment time. The templating system will not override 
+these files (actions.module.mdl, tasks.module.mdl) during templating actions.
+
+=item action implementations
+
+There are a handful of patterns that are representative of the scripts that implement
+various State Machine actions. The Makefile that encapsulates these actions is generated.
+The actions them selves are defined in the manifest.pl file.
+
+=over 4
+
+=item sh.m80
+
+.sh.m80 - the old standard
+
+=item sql.m80
+
+sqlplus scripts are used to derive data from the db in many cases.
+
+=item xml.m80
+
+the state machine definition file
+
+=item pl.m80
+
+perl files are used for database interaction in some cases.
+
+=back
+
+
+=item templates/* (runtime code)
+
+These are things that are expanded (and maybe run) under the statemachine at runtime.
+
+=item t/*.t (test code)
+
+These are scripts that can be run with the C<mos test> target. 
+
+=item s/*.s (job code)
+
+Cod that will run as part of a managed cron job.
+
+=back
+
+=cut

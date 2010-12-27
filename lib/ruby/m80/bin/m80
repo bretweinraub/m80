@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'ckuru-tools'
+emacs_trace do
+  require File.expand_path(
+                           File.join(File.dirname(__FILE__), '..', 'lib', 'm80'))
+end
+
+# Put your code here
+
+# EOF

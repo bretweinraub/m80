@@ -1,0 +1,301 @@
+# DOPOD 
+# POD =head1 M4 LIBRARIES
+# POD 
+# POD Docs on the m4 library structure and how to add new ones
+# POD 
+# POD =head1 RULES
+# POD
+# POD =head2 NAMING
+# POD 
+# POD Library filename should be in all lowercase with a .m4 extension
+# POD 
+# POD Macronames should be all uppercase with the appropriate prefix. See L<"NAMESPACE">.
+# POD 
+# POD =head2 DIVERTING
+# POD 
+# POD Only divert in the container, or main files. That will save some lines of output. And
+# POD in almost all cases loading a library is done inside of it's own divert. Divert is an
+# POD on and off switch, not a stack, so undiverting inside a library will turn off divert 
+# POD for the main script. Be aware of this, and don't divert in libraries if possible.
+# POD 
+# POD =head2 QUOTES
+# POD 
+# POD Only use "[" and "]" quotes in your libraries. The 1 exception to this is derivations of this
+# POD pattern. (I.e. "[[","]]" & "[[[","]]]" etc ...)
+# POD 
+# POD This is because "[[" resolves to "" the same as "[" resolves to "" and under the context of "[","]", 
+# POD "[[","]]" still resolves to "" (it is just double quoted). This will allow for most file types, 
+# POD although recursive macro expansion in this scenario hasn't been tested completely. Jim's guess is
+# POD that there are cases where the quotes will mess up some base implementations.
+# POD 
+# POD Simple expansions (only 1x expanded) will work just fine in this scenario.
+# POD 
+# POD Also, calling C<m4_changequote> to change to the current chars will throw an m4 error, so make sure
+# POD that you call something obscure like C<m4_changequote([++,++])> to clear the quotes before setting 
+# POD the quotes. Quotes are the most confusing part of the m4 binary!
+# POD 
+# POD  For example:
+# POD     File1.m4 contains:
+# POD 	 m4_divert(-1)
+# POD 	 m4_changequote([,])
+# POD 	 m4_include(file2.m4)
+# POD 	 m4_divert
+# POD 
+# POD     File2.m4 contains:
+# POD 	 m4_divert(-1)
+# POD 	 m4_changequote([,])
+# POD 	 m4_define([],[])
+# POD 	 m4_divert
+# POD 
+# POD This scenario will fail! with an M4:EOF message. The reason is that the 2nd changequote is trying
+# POD to set the quotes to what they already are. This is the case when libraries start loading each other
+# POD or scripts load libraries, and their own functions... In this case, you must do:
+# POD 
+# POD     File2.m4 contains:
+# POD 	 m4_divert(-1)
+# POD 	 m4_changequote([++,++])m4_dnl or some other set of chars!
+# POD 	 m4_changequote([,])
+# POD 	 m4_define([],[])
+# POD 	 m4_divert
+# POD 
+# POD This "clears" the quote setting before setting quotes. B<NOTE:> If you use the "tick" and "singlequote" as your
+# POD quote delimiters, you run into the same problem if the library is the first to load, since that is what the default characters are. Make sure that these
+# POD quotes are unique, and likely never used to actually deliminate a library.
+# POD 
+# POD M4:EOF error messages are standard when the quoting scheme is messed up. If you get one of these
+# POD 9 times out of 10 it is because there is a missing quote on a C<m4_define> somewhere, or your
+# POD C<m4_ifelse> or C<m4_ifdef> I<or a similar function> is quoted improperly. These are B<nasty> to
+# POD find, so BE CAREFUL!
+# POD 
+# POD =head2 NAMESPACE
+# POD 
+# POD Each file needs to define it's own namespace. This is so that there aren't collisions across
+# POD libaries creating *really* hard to track bugs. The namespace should be the same as the filename
+# POD in uppercase. So if you write the "somethingorother.m4" library, all macros in your library
+# POD should be implemented as: "SOMETHINGOROTHER_MACRO". Abbreviations are allowed, but need to
+# POD be documented.
+# POD 
+# POD base.m4 is *special*
+# POD 
+# POD base is an extension of "m4_" therefore, all commands in this file should define m4_ as the
+# POD prefix. This ISN'T done automatically (like it used to be). In general, when deciding if something
+# POD is an extension to the base, you should ask yourself:
+# POD   * Is it applicable to all libraries - is it infact "extending" the m4 base language?
+# POD   * does this macro contain a bunch of other base m4 calls, and not much else?
+# POD 
+# POD Yes to either of these (and likely both), and it is a good idea to put it in this file.
+# POD 
+# POD =head2 DEPENDENCY
+# POD 
+# POD There are macro dependencies and library dependencies. This functionality exists so that you
+# POD can define the dependencies directly in the library files, and then just include a single
+# POD macro or library in the script that implements the library/macro and have all the correct
+# POD functionality. See the note below for additional information on this!
+# POD 
+# POD Use: C<m4_dep([macro name])> for macro dependencies, and C<m4_lib_dep([library name])> for 
+# POD library dependencies. The library name DOES NOT take the .m4 extension. 
+# POD The end result is that the dependency information is only loaded once.
+# POD 
+# POD B<NOTE:> The library dependency DOES NOT work. This is due to a quoting issue. The way the macro
+# POD is written currently, the m4_include is inside a quoted block. This throws off the quoting of all
+# POD the included macros, since they treated as double-quoted. (At least this is how I am interpreting
+# POD it at this time. For this reason, just use C<m4_include>s to load external libraries.
+# POD 
+# POD If you want to use this functionality, you have to C<m4_include(dep.m4)> before calling
+# POD it's functions.
+# POD 
+# POD BEWARE that you don't change quotes to the multiples in a library that is called. This will set
+# POD off m4 recursion, and it will take a while to die. I.e. DO NOT:
+# POD 
+# POD  file1.m4
+# POD    m4_changequote([,])
+# POD    m4_lib_dep(file2)
+# POD 
+# POD  file2.m4
+# POD    m4_changequote([[[,]]])
+# POD    ...
+# POD 
+# POD This WILL NOT work, and there is no workaround at this time!
+# POD 
+# POD 
+# POD The dep.m4 library is *special* in the sense that it defines additions to the m4 base set
+# POD of macros. Unless you are specifically augmenting or changing the dependency functionality,
+# POD there is no reason to directly edit this file.
+# POD 
+# POD There is also a C<m4_req> function that is used to specify required variables. This is used to specify
+# POD variables that are B<required> to get a function to compile. If the variables are not specified, then
+# POD the m4 compilation will crash letting you know what variable needs to be specified:
+# POD 
+# POD It is implemented in a library like this:
+# POD 
+# POD  m4_define([DB_GETDBCONNECTION],[
+# POD  m4_dep([DB_GLOBALS])
+# POD  m4_dep([DB_ENDDBCONNECTION])
+# POD  m4_dep([DB_DBERROROUT])
+# POD  m4_req([username])
+# POD  m4_req([password])
+# POD  Function GetDBConnection(ServerName, DBName)
+# POD 	UserName = "GLOBAL_VAR([username])"
+# POD 	Password = "GLOBAL_VAR([password])"
+# POD  End Function
+# POD 
+# POD It is implemented in the calling script like this:
+# POD 
+# POD  GLOBAL_VAR(username,jrenwick)
+# POD  GLOBAL_VAR(password,jrenwick)
+# POD 
+# POD On a side note, the reason this exists is to avoid 
+# POD nesting the argument calls to different macros.
+# POD After looking at this stuff for a while, and doing things like,
+# POD 
+# POD  m4_define([foo],[$1 = something and macro bar returns: bar($*)])
+# POD  m4_define([bar],[shift($*)])
+# POD 
+# POD which is confusing enough at 1 level let alone 2 or 
+# POD three, or appending variables to loops, etc...
+# POD It became clear that it was best for macros to 
+# POD specify global variables that they depended on. 
+# POD 
+# POD The difference between an C<m4_req> and and 
+# POD C<m4_dep> is that a req will die with errors, a dep will
+# POD continue on without complaining. Since a variable 
+# POD is just a macro, you can use either dep
+# POD or req to pull in both variables and other macros. 
+# POD This is handy when you want to override macros
+# POD depending on the language or platform that is being implemented. 
+# POD The other difference is that C<m4_dep> sets a global variable: C<_[MACRONAME]_loaded>
+# POD equal to "1". This can be used to check if a library is being implemented, 
+# POD and incorporate code specific to that library, i.e.
+# POD 
+# POD  m4_define([foo],[Age Functionality ...])
+# POD  m4_define([bar],[
+# POD   m4_dep(foo)
+# POD   Main Processing ...
+# POD   m4_ifelse(_foo_loaded,1,
+# POD    [Main processing code that is specific to foo ...])
+# POD  ])
+# POD 
+# POD Again, this avoids nesting variables, and it allows a global way to 
+# POD tie together all the custom library functionality.
+# POD 
+# POD 
+# POD =head2 GOTCHA M4 VARIABLE NAMES
+# POD 
+# POD The following variable names are all defined in the make env:
+# POD 
+# POD  export SYSTEM		= 	
+# POD  export platform 	= 	$(shell uname)
+# POD  export SHELL		=	bash
+# POD  export ECHO		=	echo
+# POD  export BSDECHO		=	$(ECHO) -n
+# POD  export ATTECHO		=	$(ECHO)
+# POD  export CPP		=	cpp
+# POD  export M4		=	m4
+# POD  export PERL		=	perl
+# POD  CC		=	gcc
+# POD  RM		=	/bin/rm
+# POD 
+# POD Be careful when specifying these values in scripts with 
+# POD M4_VARIABLES. If there is a space in 
+# POD a command (as is the case with $BSDECHO), you will find 
+# POD that your m4 conversions are failing.
+# POD This is because the "-n" shows up as a separate argument 
+# POD to m4 on the commandline.
+# POD 
+# POD In this situation, you need to use single or double quotes to enclose the char on the commandline.
+# POD 
+# POD =head2 TEST FUNCTIONS
+# POD 
+# POD You *should* implement a macro that tests all the macros in your library. The naming convention
+# POD for this is: C<_[LIBRARYNAME]_TEST> in all uppercase.
+# POD 
+# POD When the test infrastructure is run against the library, it will be parsed with the following
+# POD syntax similar to:
+# POD C<$ echo -e "m4_include([LIBRARYNAME].m4)\n\n _[LIBRARYNAME]_TEST" | m4 --prefix-builtins --include=/
+# POD home/jrenwick/work/ListGen/CodeGenerator/m4>
+# POD 
+# POD This results in the output being written to stdout. The output can be compared (cmp) against 
+# POD the expected results.
+# POD 
+# POD See the test infrastructure docs for more information on setting up and running tests.
+# POD 
+# POD 
+# POD =head2 STRUCTURE
+# POD 
+# POD Of course, any structure that you can think of can be used. :) However, the current m4 pathing information
+# POD points only to the root m4 libraries. Therefore, if you know that you are going to want to break up your
+# POD libraries into sub libraries, then follow the perl standard for library naming. That is, a file at the root
+# POD with the name, libraryname.m4 and a folder with the name, libraryname. Then inside the folder, add all your
+# POD additional libraries, and make sure to reference the correct path from your top level library. 
+# POD A sample of the top level library file may be:
+# POD 
+# POD  m4_divert(-1)m4_dnl
+# POD  m4_include(dep.m4)
+# POD  # this file is a wrapper around the Windows specific libraries. You only need to
+# POD  # reference this 1 file to get all the functionality
+# POD  m4_include(Windows/VBS/dbaccess.m4)
+# POD  m4_include(Windows/VBS/scm.m4)
+# POD  m4_include(Windows/VBS/vbfilemanip.m4)
+# POD  m4_include(Windows/VBS/vbscript.m4)
+# POD  m4_include(Windows/VBS/windows.m4)
+# POD  m4_changequote(<+++,+++>)
+# POD  m4_changequote([,])
+# POD  m4_divert
+# POD 
+# POD This structure is recursive and should be used as a guideline to help structure libraries for your
+# POD projects. To date, I haven't seen a library that loads enough sub libraries and macros to put a 
+# POD significant load on m4. If performance becomes an issue, consider sub dividing the top level libs.
+# POD 
+# POD =head2 OVERRIDING MACROS
+# POD 
+# POD This is where things get interesting. Once you know what macros are available, you can change
+# POD them at compile time by calling C<m4_pushdef> to alter the macro definition. Following is
+# POD a list of macros that it makes sense to do this with...
+# POD 
+# POD  _ECHO : Defaults to "Response.Write" from the Windows.m4 library include.
+# POD          Other interesting values may be "Wscript.Echo"
+# POD 
+# POD  _REQUEST(var) : Defaults to "CommandLineArgs("var")" from the Windows.m4 library include.
+# POD          Other interesting values may be "Wscript.Arguments("var")" or "Request("var")"
+# POD 
+# POD  _END : Defaults to "Wscript.Quit" from the Windows.m4 library include.
+# POD          Other interesting values may be "Response.End"
+# POD 
+# POD  _BUFFER : m4_pushdef([_BUFFER],[m4_dep(LIB_COMMANDLINEARGS)])
+# POD          Other interesting values may be "Response.Buffer = False"
+# POD 
+# POD  _SCRIPT_HEADER : m4_pushdef([_SCRIPT_HEADER],[])
+# POD          Other interesting values may be "<%@language=vbs%><%"
+# POD 
+# POD  _SCRIPT_FOOTER : m4_pushdef([_SCRIPT_FOOTER],[])
+# POD          Other interesting values may be "%>"
+# POD 
+# POD The following formatting directives are also available:
+# POD 
+# POD  m4_pushdef([_PARA_START],[])
+# POD  m4_pushdef([_PARA_END],[vbNewLine])
+# POD  m4_pushdef([_TABLE_START],[])
+# POD  m4_pushdef([_TABLE_END],[vbNewLine])
+# POD  m4_pushdef([_HEADERROW_START],["   "])
+# POD  m4_pushdef([_HEADERROW_END],[])
+# POD  m4_pushdef([_ROW_START],[])
+# POD  m4_pushdef([_ROW_END],[vbNewLine])
+# POD  m4_pushdef([_CELL_START],["   "])
+# POD  m4_pushdef([_CELL_END],[])
+# POD 
+# POD Formatting is defined internal to a macro with:
+# POD 
+# POD  m4_define([B_APPEND],[m4_ifelse($1,,[$1],[$1 $2])])
+# POD  m4_define([F_APPEND],[m4_ifelse($1,,[$1],[$2 $1])])
+# POD 
+# POD 
+# POD I.E.:
+# POD 
+# POD  SQLToTable = SQLToTable F_APPEND(_TABLE_START,&) & "" F_APPEND( _ROW_START,&)
+# POD 
+# POD OR
+# POD 
+# POD  SQLToTable = SQLToTable F_APPEND(_ROW_END,&)
+# POD 
+
+

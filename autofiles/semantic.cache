@@ -1,0 +1,15 @@
+;; Object autofiles/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "autofiles/"
+  :tables (list 
+   (semanticdb-table "generic.mk"
+    :major-mode 'makefile-mode
+    :tags '(("SUFFIXES" function (:arguments (".sh" ".sh.m4")) nil [1 24]) ("M80_LIB" variable (:default-value ("${pkgdatadir}/lib")) nil [289 319]) ("M80_TEMPLATES" variable (:default-value ("${pkgdatadir}/lib/perl/templates")) nil [319 369]) ("BOOTSTRAP_LIB" variable (:default-value ("${top_srcdir}/lib")) nil [369 403]) ("MAKE_LIB" variable (:default-value ("$(BOOTSTRAP_LIB)/make")) nil [403 436]) ("M4_FLAGS" variable (:default-value ("-I$(top_srcdir)/lib" "-I$(top_srcdir)/lib/m4" "-DSHELL=$(BASH)" "-DM4=$(M4)" "-I$(M80_LIB)" "-DM80_BIN=${bindir}" "-DM80_LIB=$(M80_LIB)" "$(M4DEBUG)" "-DPRINTDASHN=\"$(PRINTDASHN)\"" "-DPERL=$(PERL)" "-DSPERL=\"$(PERL) -I$(M80_LIB)/perl\"" "-DVERSION=$(VERSION)" "-Dprefix=$(prefix)" "--prefix-builtins")) nil [438 723]) ("PERL_FLAGS" variable (:default-value ("-I$(top_srcdir)/lib/perl")) nil [723 761]) ("PP_FLAGS" variable (:default-value ("--include=$(top_srcdir)/tests/perl" "--include=$(top_srcdir)/lib/perl" "--options" "M80_LIB=$(M80_LIB)" "--options" "M80_BIN=${bindir}" "--options" "M80_TEMPLATES=$(M80_TEMPLATES)" "--options" "VERSION=$(VERSION)" "--options" "--options" "prefix=$(prefix)" "--options" "BOOTSTRAP_LIB=$(BOOTSTRAP_LIB)" "$(PP_DEBUG)")) nil [761 1058]) ("PP" variable (:default-value ("${top_srcdir}/autofiles/pp")) nil [1231 1264]) ("TEXI2HTML" variable (:default-value ("${top_srcdir}/autofiles/texi2html")) nil [1264 1310]) ("clean" function (:arguments (";" "@rm" "-f" "$(CLEAN_FILES)")) nil [1342 1374]) ("%" function (:arguments ("%.sh" "Makefile")) nil [1374 1417]) ("%" function (:arguments ("%.pl" "Makefile")) nil [1417 1460]) ("%.sh" function (:arguments ("%.sh.m4" "Makefile")) nil [1460 1523]) ("%.texi" function (:arguments ("%.texi.m4" "Makefile")) nil [1523 1590]) ("%.mk" function (:arguments ("%.mk.m4" "Makefile")) nil [1590 1653]) ("%.pm" function (:arguments ("%.pm.m4" "Makefile")) nil [1653 1716]) ("%.plx" function (:arguments ("%.plx.m4" "Makefile")) nil [1716 1781]) ("%.pl" function (:arguments ("%.pl.m4" "Makefile")) nil [1781 1857]) ("%.pl" function (:arguments ("%.pl.plx" "Makefile")) nil [1858 1943]) ("%.mk" function (:arguments ("%.mk.plx" "Makefile")) nil [1943 2016]) ("%.m4" function (:arguments ("%.m4.plx" "Makefile")) nil [2016 2089]) ("%.sh" function (:arguments ("%.sh.plx" "Makefile")) nil [2089 2175]) (".localenv" function (:arguments (".localenv.plx" "Makefile")) nil [2175 2258]) ("${top_srcdir}/lib/make/m80doc.mk" include nil nil [2259 2302]))
+    :file "generic.mk"
+    :pointmax 2452
+    )
+   )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0pre3"
+  :semanticdb-version "2.0pre3"
+  )

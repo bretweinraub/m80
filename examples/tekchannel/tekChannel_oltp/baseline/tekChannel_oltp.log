@@ -1,0 +1,131 @@
+BEGIN
+DELETE 1
+INSERT 26107 1
+COMMIT
+DROP TABLE
+CREATE TABLE
+psql:tekChannel_oltp.sql:62: NOTICE:  Drop cascades to constraint flaviaorder_fk1 on table flaviaorder
+psql:tekChannel_oltp.sql:62: NOTICE:  Drop cascades to constraint appointment_fk2 on table appointment
+DROP TABLE
+psql:tekChannel_oltp.sql:87: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'customer_pk' for table 'customer'
+psql:tekChannel_oltp.sql:87: NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'customer_uk01' for table 'customer'
+CREATE TABLE
+BEGIN
+INSERT 26118 1
+COMMIT
+DROP SEQUENCE
+CREATE SEQUENCE
+psql:tekChannel_oltp.sql:104: ERROR:  RemoveFunction: function customer_i() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:116: ERROR:  RemoveFunction: function customer_u() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:145: NOTICE:  Drop cascades to constraint flaviaorder_fk2 on table flaviaorder
+psql:tekChannel_oltp.sql:145: NOTICE:  Drop cascades to constraint appointment_fk1 on table appointment
+DROP TABLE
+psql:tekChannel_oltp.sql:165: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'representative_pk' for table 'representative'
+CREATE TABLE
+BEGIN
+INSERT 26131 1
+COMMIT
+DROP SEQUENCE
+CREATE SEQUENCE
+psql:tekChannel_oltp.sql:182: ERROR:  RemoveFunction: function representative_i() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:194: ERROR:  RemoveFunction: function representative_u() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:211: NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'representative_uk01' for table 'representative'
+ALTER TABLE
+DROP TABLE
+psql:tekChannel_oltp.sql:242: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'appointment_pk' for table 'appointment'
+CREATE TABLE
+BEGIN
+INSERT 26146 1
+COMMIT
+DROP SEQUENCE
+CREATE SEQUENCE
+DROP FUNCTION
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:271: ERROR:  RemoveFunction: function appointment_u() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:286: NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ALTER TABLE
+psql:tekChannel_oltp.sql:290: NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ALTER TABLE
+psql:tekChannel_oltp.sql:308: NOTICE:  Drop cascades to constraint lineitem_fk2 on table lineitem
+DROP TABLE
+psql:tekChannel_oltp.sql:330: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'flaviaorder_pk' for table 'flaviaorder'
+psql:tekChannel_oltp.sql:330: NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'flaviaorder_uk01' for table 'flaviaorder'
+CREATE TABLE
+BEGIN
+INSERT 26169 1
+COMMIT
+DROP SEQUENCE
+CREATE SEQUENCE
+psql:tekChannel_oltp.sql:347: ERROR:  RemoveFunction: function flaviaorder_i() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:359: ERROR:  RemoveFunction: function flaviaorder_u() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:374: NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ALTER TABLE
+psql:tekChannel_oltp.sql:378: NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ALTER TABLE
+psql:tekChannel_oltp.sql:396: NOTICE:  Drop cascades to constraint lineitem_fk1 on table lineitem
+psql:tekChannel_oltp.sql:396: NOTICE:  Drop cascades to constraint promotion_fk1 on table promotion
+DROP TABLE
+psql:tekChannel_oltp.sql:417: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'product_pk' for table 'product'
+psql:tekChannel_oltp.sql:417: NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'product_uk01' for table 'product'
+CREATE TABLE
+BEGIN
+INSERT 26192 1
+COMMIT
+DROP SEQUENCE
+CREATE SEQUENCE
+psql:tekChannel_oltp.sql:434: ERROR:  RemoveFunction: function product_i() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:446: ERROR:  RemoveFunction: function product_u() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+DROP TABLE
+psql:tekChannel_oltp.sql:494: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'promotion_pk' for table 'promotion'
+psql:tekChannel_oltp.sql:494: NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'promotion_uk01' for table 'promotion'
+CREATE TABLE
+BEGIN
+INSERT 26207 1
+COMMIT
+DROP SEQUENCE
+CREATE SEQUENCE
+psql:tekChannel_oltp.sql:511: ERROR:  RemoveFunction: function promotion_i() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:523: ERROR:  RemoveFunction: function promotion_u() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:538: NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ALTER TABLE
+DROP TABLE
+psql:tekChannel_oltp.sql:574: NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'lineitem_pk' for table 'lineitem'
+CREATE TABLE
+BEGIN
+INSERT 26224 1
+COMMIT
+DROP SEQUENCE
+CREATE SEQUENCE
+psql:tekChannel_oltp.sql:591: ERROR:  RemoveFunction: function lineitem_i() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:603: ERROR:  RemoveFunction: function lineitem_u() does not exist
+CREATE FUNCTION
+CREATE TRIGGER
+psql:tekChannel_oltp.sql:618: NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ALTER TABLE
+psql:tekChannel_oltp.sql:622: NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+ALTER TABLE

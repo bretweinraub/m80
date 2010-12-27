@@ -1,0 +1,68 @@
+# $m80path = [{ 'command' => 'embedperl.pl' }];
+
+<:
+
+if ($ENV{'include_files'}) {
+    for my $x (split /\s+/, $ENV{'include_files'}) {
+        print "include $x\n";
+    }
+}
+
+print "\n";
+
+if ($ENV{'subdirs'}) {
+    if (! $ENV{'roles'}) {
+        print "SUBDIRS = $ENV{'subdirs'}\n\n";
+    } else {
+        print "MAYBE_OPT = \n";
+        my $maybe_opt = '';
+        for my $role_pair (split /;/, $ENV{'roles'}) {
+            $maybe_opt = '';
+            if ($role_pair) {
+                my ($role, $val) = split /=/, $role_pair;
+                for my $dir (grep { ! $seen{$_}++ } split /\s+/, $val) {
+                    my @dirs = split /\//, $dir;
+                    $maybe_opt .= " " . $dirs[0];
+                }
+                print "if " . uc($role) . "_OPT\n";
+                print "  MAYBE_OPT += $maybe_opt\n";
+                print "endif\n";
+            }
+        }
+        print "if ALL_OPT\n";
+        print "  MAYBE_OPT += " . $ENV{'subdirs'} . "\n";
+        print "endif\n";
+        print "\n\nSUBDIRS = \$(MAYBE_OPT)\n\n";
+    }
+}
+print "\n";
+print 'relativePath = $(shell tmp=`cd $(top_srcdir); pwd`; pwd | perl -ple "s,$$tmp,,")' , "\n";
+print 'bindir=$(pkgdatadir)$(relativePath)' , "\n";
+
+print "\n" , 'test_rule ::; @echo "relativePath is $(relativePath) top_srcdir is $(top_srcdir)"', "\n\n";
+print "\n";
+
+if ($ENV{'bin_scripts'}) {
+    print "bin_SCRIPTS = $ENV{'bin_scripts'}\n";
+}
+print "\n";
+
+if ($ENV{'extra_dist'}) {
+    if ($ENV{'istoplevel'}) {
+        print "EXTRA_DIST = $ENV{'extra_dist'} autofiles\n";
+    } else {
+        print "EXTRA_DIST = $ENV{'extra_dist'}\n";
+    }
+}
+print "\n";
+
+if ($ENV{'special_rule_files'}) {
+    print "SPECIAL_RULE_FILES += $ENV{'special_rule_files'}\n";
+}
+
+for my $x ( keys %ENV ){
+    print "# $x -> $ENV{$x}\n";
+}
+
+:>
+

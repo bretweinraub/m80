@@ -1,0 +1,190 @@
+2004-12-25  Bret Weinraub  <bweinrau>
+
+	* embedperl
+
+2004-06-22  Bret Weinraub  <bweinrau>
+
+	* lib/shell/db/oracle/sqlfunc.sh (LOCALCLEAN): Adapted to the new m80 model.
+
+	* src/util/m80.sh.m4 (default): Added SUPPRESS_VC variable that does just that;
+	keeps the VC interface from running.
+
+2004-06-21  bweinraub  <bweinraub@localhost.localdomain>
+
+	* src/util/m80.sh.m4 (default): Bugfixes to
+	m80 script and generated makefiles.  Basically
+	these were broke and should now work.
+
+2004-06-17  Jim Renwick  <jim@hydrogen.buildmeasite.com>
+
+	* added functionality to cd alias to pp expand .localenv files.
+
+	* addaddpendenv.pl and push.pl together with
+	lib/shel/env/m80_shell_env.sh completely change
+	the way to work with the shell. To turn it on
+	link to m80_shell_env.sh from within .profile or
+	.bashrc.
+
+2004-06-16  Jim Renwick  <jim@hydrogen.buildmeasite.com>
+
+	* Define complex metadata in Perl, not shell. M80
+	supports NameValue with pp_env and collections by
+	defining the delimiter character for a list in 
+	$M80_COL_DELIM; pp_env will return an array.
+
+2004-06-15  Jim Renwick  <jim@hydrogen.buildmeasite.com>
+
+	* cleaned up pp and fixed logic bug in pp_gensym
+
+	* ported pp to multiline matching algorithm
+
+2004-06-11  Jim Renwick  <jim@hydrogen.buildmeasite.com>
+
+	* Added env handling (pp_env) to pp
+
+2004-06-10  Jim Renwick  <jim@hydrogen.buildmeasite.com>
+
+	* pp_(s)import added
+
+	* simple tests framework added
+
+2004-06-09  Jim Renwick  <jim@hydrogen.buildmeasite.com>
+
+	* pp updated with pp_dumpdef, pp_gensym
+
+2004-06-09  Bret Weinraub  <bweinrau>
+
+	* Adds in a "m80 --libpath" that takes the place of generated
+	M80_LIB paths in makefiles.
+	* Update to the m80 script to generate makefiles that use this
+	new $(shell m80 --libpath) approach.
+
+	* Fix make install problem in src/util
+
+	* Fix local.mk issue with bogus -PERL line
+
+	* Fix in local.mk for trailing PERL variable garbage
+
+	* fixes the configure.in version macros
+
+	* P4 m80commit alias
+
+2004-06-08  bweinraub  <bweinraub@localhost.localdomain>
+
+	* New makefile.in s
+
+2004-06-08  U-TOMMY-VW9B0GHCT\Owner  <Owner@tommy-vw9b0ghct>
+
+	* Remove texi2html entry in src/util
+
+2004-06-08  Bret Weinraub  <bweinrau>
+
+	* Fix m80 commit alias
+
+	* Fix configure.in to install into MAJORVERSION.MINORVERSION.  Also
+	remove duplicate entries of 0.06
+
+	* Add -Dprefix=$(prefix) to generic.mk
+
+2004-06-08  Jim Renwick  <jim@hydrogen.buildmeasite.com>
+
+	* added texi2html and pp to the bootstrapping location.
+
+	* pp is the new perl preprocessor which is called more traditionally on the commandline
+
+2004-06-07  Bret Weinraub  <bweinrau>
+
+	* Fix m80root in .localenv.  
+
+	* Add comments to unique calls in tables.m4
+
+	* Add VC_EDIT call to make buildRepository
+
+	* Added in "associateTwoTables" macro:
+
+	associateTwoTables(p4marker,drt_host)
+
+2004-06-05  bweinraub  <bweinraub@localhost.localdomain>
+
+	* ChangeLog: revision numbers in the change log
+
+	* m80.sh.m4: fix error where a trailing '/' to moduleType was not removed
+
+--------------- 0.06.01
+
+	* Automake.am: EXTRA_DIST was not correctly set in many of these.
+
+--------------- 0.06	
+
+	* Updated .localenv to support "m80commit"
+
+	* Built a handy dandy ChangeLog alias
+
+	* configure.in Added --have-VC_TYPE support in configure/local.mk
+
+	* configure.in: Setting version # to 0.06
+
+2004-03-09  Bret  <Bret@CPQ10775191451>
+
+	* There was a bug in repositoryRules.mk.m4  ... $(M4) was being clobbered.
+
+	* We need examples!  See m80/examples.  That is all.
+
+2004-03-08  Bret  <Bret@CPQ10775191451>
+
+	* Adding in buildPatch and process targets to src/util.  Neither work for now....
+
+2004-03-02  Bret Weinraub  <bweinrau>
+
+	* added in missing perlhtml.m4 file (was in old hydrogen depot)
+
+2004-03-01  Jim Renwick <jrenwick@renwix.com>
+
+	* Makefile.am: Updated to properly install DATA files
+	
+	* generic.mk: Added a clean rule to that can be implemented by specifying $(CLEAN_FILES) in Makefile.am
+	
+	* configure.in: Updated the build number to 0.05
+
+	* repositoryRules.mk.m4: Added repositoryRules.mk.m4 to lib/make. This allows generation of SUFFIX rules.
+
+	* generic.mk: Added a %.sh->% Suffix rule in to move .sh.m4 output files to no-suffix files.
+
+2004-03-01  Bret Weinraub  <bweinrau>
+
+	* COPYING: Void the "no-commercial user" clause of the GPL.
+
+2004-02-27  Bret Weinraub  <bweinrau>
+
+	* Oracle DB Modules will build....
+
+	* Createm80standardtable now accepts a self explanatory Option called NOSEQUENCE.
+
+2004-02-25  Jim Renwick <jimrenwick@earthlink.net>
+
+	* Added a perl precompiler into the archtecture. *.${target}.plx implements the rule for transformation.
+
+	* Added support for make dist distcheck
+	
+2003-05-13  Bret   <bweinraub@beavis>
+
+	* Added in "shell/shellScripts.m4".  Smoother interface then before.
+
+2003-04-10  Bret Weinraub  <bweinraub@beavis>
+
+	* README (DEPENDENCIES): add blurb regarding BASH.
+
+2003-04-04  Bret Weinraub  <bweinraub@beavis>
+
+	* configure.in: adding in subdirectory makefiles
+
+	* Makefile.am: moving from explicit subdirectory calls to recursion
+
+	* TODO: created this file
+
+2003-04-05  Bret Weinraub  <bweinraub@ldonovan.netzero.net>
+
+	* configure.in: removed CPP and RANLIB dependencies, I'm not sure that 
+	we actually need these.
+	
+

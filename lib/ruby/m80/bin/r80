@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'ckuru-tools'
+
+['getoptlong',
+ 'ruby-debug',
+ 'rdoc/ri/ri_paths',
+ 'rdoc/usage']._require
+
+emacs_trace do
+
+  require File.expand_path(
+                           File.join(File.dirname(__FILE__), '..', 'lib', 'm80'))
+
+
+  command = ARGV.pop
+
+  case command
+  when 'invalid'
+    m80 = M80::Env.new
+    m80.connect
+    c = m80.connection.invalid_objects
+    while r = c.fetch
+      ckebug 0, r.inspect
+    end
+  when 'connect'
+    opts = GetoptLong.new([ '--debug', '-d', GetoptLong::NO_ARGUMENT ],
+                          [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
+                          [ '--action', '-a', GetoptLong::REQUIRED_ARGUMENT ],
+                          [ '--nocache', '-n', GetoptLong::NO_ARGUMENT ],
+                          [ '--restrict', '-r', GetoptLong::REQUIRED_ARGUMENT ],
+                          [ '--match', '-m', GetoptLong::REQUIRED_ARGUMENT ])
+
+  else
+#    m80 = M80::Env.new
+    M80.send(command.gsub(/-/,'_').to_sym,*ARGV)
+
+  end
+
+
+  
+end
+
+# Put your code here
+
+# EOF

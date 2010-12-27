@@ -1,0 +1,123 @@
+#!/usr/bin/env ruby
+
+ENV['CKURU_DEBUG_LEVEL'] = "1"
+require 'rubygems'
+require 'ckuru-tools'
+require 'm80'
+
+class BranchInfo < CkuruTools::HashInitializerClass
+  attr_accessor :base_revision
+  attr_accessor :in_sync_with
+end
+
+def derive_merge_right
+  ret = nil
+  files = `find . -type f`
+  files.each do |f|
+    f.chomp
+    if matchdata = f.match(/merge-right.r([0-9]+)/)
+      ret = matchdata[1]
+      break
+    end
+  end
+  ret
+end
+
+emacs_trace do
+  ['getoptlong',
+   'ruby-debug',
+   'rdoc/ri/ri_paths',
+   'rdoc/usage']._require
+
+  if ENV['TOP']
+    branch_head = File.join(ENV['TOP'],"..")
+  end
+
+  from_branch = to_branch = nil
+  dry_run = ""
+  no_windows = ""
+
+  opts = GetoptLong.new([ '--debug', '-d', GetoptLong::NO_ARGUMENT ],
+                        [ '--branch-head', '-b', GetoptLong::REQUIRED_ARGUMENT ],
+                        [ '--no-windows', '-n', GetoptLong::NO_ARGUMENT ],
+                        [ '--from-branch', '-f', GetoptLong::REQUIRED_ARGUMENT ],
+                        [ '--to-branch', '-t', GetoptLong::REQUIRED_ARGUMENT ],
+                        [ '--dry-run', '-D', GetoptLong::NO_ARGUMENT ]
+                        )
+
+  opts.each do |opt, arg|
+    case opt
+    when '--no-windows'
+      no_windows = "--no-windows"
+    when '--dry-run'
+      dry_run = "--dry-run"
+    when '--debug'
+      CkuruTools::Debug.instance.level = CkuruTools::Debug.instance.level + 1
+    when '--branch-head'
+      branch_head = arg
+      checkdir(branch_head)
+    when '--from-branch'
+      from_branch = arg
+    when '--to-branch'
+      to_branch = arg
+    when '--help'
+      RDoc::usage
+      exit
+    end
+  end
+
+  raise "set --from-branch and --to-branch" unless from_branch and to_branch
+
+  to_branch_dir = File.join(branch_head,to_branch)
+  M80::Utils.checkdir(branch_head,to_branch_dir)
+  ckebug 0, "using #{branch_head} as the branch head"
+
+  svnintegrate_data = "#{branch_head}/svnintegrate_data.rb"
+  require svnintegrate_data
+
+  Dir.chdir(to_branch_dir) 
+
+  ckebug 0, "in #{to_branch_dir}"
+  
+  files = `find . -type f`
+
+  msg_exec "searching for old integ files" do
+    puts
+    files.each do |f|
+      f.chomp!
+      if f and f.length >  0
+        if f.match /(\.working|merge-(right|left))/
+          ckebug 0, "found old integ files #{f} ... attempting to delete" 
+          File.unlink f
+        end
+      end
+    end
+  end
+  
+  raise "cannot find branch info for #{to_branch} in #{svnintegrate_data}" unless
+    to_branchinfo = @@branchinfo[to_branch]
+
+  if to_branchinfo.in_sync_with and to_branchinfo.in_sync_with[from_branch.to_sym]
+    rev_number = to_branchinfo.in_sync_with[from_branch.to_sym]
+    ckebug 0, "using in_sync_with rev # of #{rev_number}"
+  else
+    raise "no rev_number for #{to_branch}" unless to_branchinfo.base_revision
+    rev_number = to_branchinfo.base_revision
+    ckebug 0, "using base rev # of #{rev_number}"
+  end
+
+  docmd "svn merge #{dry_run} -r #{rev_number}:HEAD #{@@repository_data['branch_base_url']}/#{from_branch}"
+  
+  if merge_right_val = derive_merge_right
+    ckebug 0, "there are files to merge"
+    docmd "svnresolve --Dir . -r #{merge_right_val} #{no_windows}"
+  else
+    ckebug 0, "no files to merge"
+  end
+  
+  ckebug 0, "PAY ATTENTION!"
+  ckebug 0, "Once you've committed the changes in this integrate, edit #{svnintegrate_data}"
+  ckebug 0, "Under the section for #{to_branch}, add your rev # from the commit to the :in_sync_with section for #{from_branch}"
+  ckebug 0, "Have a somewhat nice day :p"
+end
+

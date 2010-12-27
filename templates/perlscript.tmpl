@@ -1,0 +1,54 @@
+m4_changecom()m4_dnl # -*-perl-*-
+#! PERL  -I`'M80_LIB/perl
+m4_changequote(<++,++>)
+m4_include(m4/pod.m4)
+
+BEGIN { require "base.pl"; }
+use Getopt::Long;
+
+$version_number = 'VERSION';
+
+# COMMANDLINE DECLARATIONS
+my $XXX;
+
+%options = mergehash( %options , 
+                      'XXX' => \$XXX, 
+        );
+$usage = "SCRIPTNAME [ --help --debug --version -z ] <filenames>\n";
+
+&opt;
+
+# CODE GOES HERE
+
+
+=pod
+
+=head1 NAME
+
+SCRIPTNAME - SCRIPTDESCRIPTION
+
+=head1 <++VERSION++>
+
+This document describes VERSION of SCRIPTNAME
+
+=head1 SYNOPSIS
+
+C<SCRIPTNAME OPTIONS STDIN>
+
+=head1 OPTIONS AND ARGUMENTS
+
+sb(--help, print this message)
+cb(--debug, turn on debugging)
+ceb(-z, increase debugging verbosity levels)
+
+=head1 DESCRIPTION
+
+What is the long version of the description of this script?
+
+=head1 PURPOSE
+
+What is the script purpose?
+
+=head1 TODO
+
+=cut

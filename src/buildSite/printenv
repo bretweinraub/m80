@@ -1,0 +1,24 @@
+#!/bin/bash
+
+cat <<EOF
+Content-Type: text/html; charset=ISO-8859-1
+
+<html>
+<pre>
+EOF
+
+env | grep -v ^$ > /tmp/zxxyy
+
+exec < /tmp/zxxyy
+
+read line
+while [ -n "$line" ]; do
+    var=$(echo $line | cut -d= -f1)
+    val=$(echo $line | cut -d= -f2-)
+    echo export $var"='"$val"'"
+    read line
+done
+
+
+
+

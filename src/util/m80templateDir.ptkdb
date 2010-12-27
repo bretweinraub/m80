@@ -1,0 +1,13 @@
+$files = {};
+$expr_list = [
+               {
+                 'expr' => '$arg',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$file',
+                 'depth' => -1
+               }
+             ];
+$eval_saved_text = undef;
+$main_win_geometry = '1605x1024+0+26';

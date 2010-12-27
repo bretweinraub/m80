@@ -1,0 +1,1 @@
+echo "what the effect of special on a parse then not special and watch" | ./yyin.pl -lexfile test.l -debug true

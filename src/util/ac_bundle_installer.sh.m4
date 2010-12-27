@@ -1,0 +1,220 @@
+#!/bin/bash
+m4_changecom()m4_dnl
+m4_changequote(<++,++>)m4_dnl
+# m4_exit(0)
+
+PROG=${0##*/}
+TMPDIR=/tmp/${PROG}.$$
+
+if [ -n "${DEBUG}" ]; then      
+        set -x
+fi
+
+docmd () {
+    if [ $# -lt 1 ]; then
+        return
+    fi
+    test -z "$silent" && { eval "echo '$*'"; }
+    test -z "$test" && { \
+        eval $*;
+        RETURNCODE=$?;
+        if [ $RETURNCODE -ne 0 ]; then \
+            echo "command \"$*\" returned with error code $RETURNCODE";
+            exit $RETURNCODE;
+        fi;
+    };
+    return 0
+}
+
+
+function recordcmd {
+    if [ $# -lt 1 ]; then
+        return
+    fi
+    test -z "$silent" && { eval "echo '$*'"; }
+    test -z "$test" && { \
+        cntr=1
+        while [ -f $TMPDIR/${1}${cntr}.0 ]; do \
+            ((cntr=$cntr+1));
+        done;
+        stdout=$TMPDIR/${1}${cntr}.1;
+        stderr=$TMPDIR/${1}${cntr}.2;
+        eval $* 2> $stderr 1> $stdout;
+        RETURNCODE=$?;
+        if [ $RETURNCODE -ne 0 ]; then \
+            echo "command \"$*\" returned with error code $RETURNCODE";
+            cat $stderr;
+            exit $RETURNCODE;
+        fi;
+    };
+    return 0
+}
+
+function usage {
+    export PD_FLAGS=-T
+    export PD_DIRS=`dirname $0`
+    pd `basename $0 .sh`
+}
+
+<++prefix++>=''
+is_perl_mod=''
+skip_links=''
+poplist=0
+OPTIND=0 # required in bash
+while getopts :lmstp: c
+  do case $c in
+      s)  silent="true"; ((poplist=$poplist+1));;
+      m)  is_perl_mod="true"; ((poplist=$poplist+1));;
+      t)  test="true"; ((poplist=$poplist+1));;
+      l)  skip_links="true"; ((poplist=$poplist+1));;
+      p)  <++prefix++>_dir=$OPTARG; ((poplist=$poplist+2));;
+      :)  echo $OPTARG requires a value;;
+      \?) echo unknown option $OPTARG;;
+  esac
+done
+
+while [ $poplist -ne 0 ]; do
+    test -n "$test" && test -z "$silent" && { echo popping $1; };
+    shift
+    ((poplist=$poplist-1))
+done
+
+remote_file=$1;
+local_file=`echo $remote_file | awk 'BEGIN { FS = "/" }; { print $NF }'`;
+compression_ext=`echo $remote_file | awk 'BEGIN { FS = "." }; { print $NF }'`;
+base_file=`basename $local_file .tar.$compression_ext`
+test $compression_ext = "gz" && { compression_flags=-z; };
+test $compression_ext = "bz2" && { compression_flags=-j; };
+test -n "$<++prefix++>_dir" && { <++prefix++>=--<++prefix++>=$<++prefix++>_dir/$base_file; };
+test -n "$<++prefix++>_dir" && test -n "$is_perl_mod" && { 
+    <++prefix++>=PREFIX=$<++prefix++>_dir
+};
+unpack_dir=$TMPDIR/$base_file;
+
+test -n "$test" && test -z "$silent" && {
+    echo "[$PROG]:  remote_file       = $remote_file";
+    echo "[$PROG]:  local_file        = $local_file";
+    echo "[$PROG]:  compression_ext   = $compression_ext";
+    echo "[$PROG]:  compression_flags = $compression_flags";
+    echo "[$PROG]:  <++prefix++>_dir        = $<++prefix++>_dir";
+    echo "[$PROG]:  <++prefix++>            = $<++prefix++>";
+    echo "[$PROG]:  unpack_dir        = $unpack_dir";
+    echo "[$PROG]:  is_perl_mod       = $is_perl_mod";
+}
+
+# ASSERT
+test -z "$remote_file" && { usage; exit 1; };
+
+
+#
+# create the tmp dir where the installer will run from
+test -d $TMPDIR && { docmd rm -rf $TMPDIR; };
+docmd mkdir -p $TMPDIR
+docmd cd $TMPDIR
+
+#
+# do the installation
+recordcmd wget --quiet $remote_file
+recordcmd tar $compression_flags -x -f $local_file
+docmd cd $unpack_dir
+
+# dynamically figure out if this is perl
+if [ -f Makefile.PL -a -z "$is_perl_mod" ]; then
+    test -z "$silent" && echo "This is a perl Module, I am switching to perl install mode"
+    is_perl_mod="true"
+fi;
+
+# run tests to make sure it is a legit bundle on this platform
+if test -z "$SKIP_INSTALL_TESTS"; then
+    recordcmd ./runTests
+fi
+
+# do the installation if the tests were successful
+if test -n "$is_perl_mod"; then
+    <++prefix++>=PREFIX=$<++prefix++>_dir
+    recordcmd perl Makefile.PL $<++prefix++>
+else
+    recordcmd ./configure $<++prefix++>
+fi
+recordcmd make
+recordcmd make install
+
+#
+# try to create links to the new version.
+test -z "$skip_links" && test -z "$is_perl_mod" && {
+    for dir in bin lib include share; do
+	if test -e $<++prefix++>_dir/$base_file/$dir; then
+	    if test -d $<++prefix++>_dir/$dir -a ! -L $<++prefix++>_dir/$dir; then
+		for lnk in `ls $<++prefix++>_dir/$base_file/$dir`; do
+		    test -L $<++prefix++>_dir/$dir/$lnk && rm -f $<++prefix++>_dir/$dir/$lnk
+		    docmd ln -s $<++prefix++>_dir/$base_file/$dir/$lnk $<++prefix++>_dir/$dir/$lnk
+		done
+	    else
+		test -L $<++prefix++>_dir/$dir && rm -f $<++prefix++>_dir/$dir
+		docmd ln -s $<++prefix++>_dir/$base_file/$dir $<++prefix++>_dir/$dir
+	    fi
+	fi
+    done
+}
+
+# =pod
+#
+# =head1 NAME
+#
+# ac_bundle_installer - grab a package off a remote server and install it
+#
+# =head1 VERSION
+#
+# This document describes VERSION 0.0.x of ac_bundle_installer
+#
+# =head1 SYNOPSIS
+#
+# ac_bundle_installer [ -s -t -m -p <<++prefix++>> ] <remote_bundle>
+#
+# =head1 OPTIONS AND ARGUMENTS
+#
+# =over
+#
+# =item -t
+#
+# run in test mode. Print out the commands that will run, but don't run them
+#
+# =item -s
+#
+# run silently.
+#
+# =item -m
+#
+# The bundle is a Perl bundle.
+#
+# =item -p <<++prefix++>>
+#
+# Specify a different than normal <++prefix++>. "normal" is whatever the bundle defaults to.
+#
+# item $SKIP_INSTALL_TESTS
+#
+# If this environment variable has a value, then the tests will be skipped. Otherwise, they
+# will be run prior to installation.
+#
+# =back
+#
+# =head1 DESCRIPTION
+#
+# This attempts to grab a remote distribution and install it. It 
+# assumes autoconf based bundles, but can accept perl bundles and 
+# also attempts to figure it out at run time.
+#
+# It wraps up the most common config, that is install to either the
+# default location, or one specified. It also logs the install process
+# in a /tmp directory - which also means that it can run in parallel.
+#
+# =head1 PURPOSE
+#
+# 1 liner for all those packages out there that aren't managed by a 
+# CPAN, yum, cygwin, apt-get, emerge, whathaveyou ...
+#
+# =cut
+
+# Local Variables:
+# mode: shell-script
+# End:

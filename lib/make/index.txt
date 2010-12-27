@@ -1,0 +1,79 @@
+m4_include(m4doc.m4)
+# DOPOD-GEN
+# POD =head1 ListGenerator/CodeGenerator Makefile Introduction
+# POD
+# POD The code generator is an application that takes HTML pages and turns them into ListGenerator or PreferenceCenter ASP applications. It does this by reading in the files, parsing, prompting the user for a map between source HTML and target Database to build a map, then writing out the ASP. This model works well, until the code generator needs to change. Custom client development is unsupported in this model.
+# POD 
+# POD This rev of the code generator creates a framework for development to happen in. Developers are allowed to create and extend libraries that map to different levels of client code. This allows 2 things:
+# POD 
+# POD =over 4
+# POD 
+# POD =item 1
+# POD 
+# POD The developers can extend the code base of the code generator in a managed way.
+# POD 
+# POD =item 2
+# POD 
+# POD The framework creates a deploy environment that can be used to easily upgrade a client with new features or the latest bugfix.
+# POD 
+# POD =back
+# POD 
+# POD =head2 $TOP Environment Variable
+# POD 
+# POD $TOP is the only environment variable that is necessary for the
+# POD system. It defines the top level directory. This directory contains
+# POD the CodeGenerator and Source folders. If you don't set this variable
+# POD the system will throw an error before doing anything, and currently this
+# POD error will create a bunch of messages that don't make any sense, but
+# POD won't kill processing. Be aware of this!
+# POD 
+# POD =head2 Directory Structures
+# POD
+# POD The make structure for the CodeGenerator is based on a tree structure.
+# POD In any tree, there are nodes and there are leafs. A node contains sub-folders
+# POD and a leaf does not. Therefore, the makefile that ultimately lives in a
+# POD folder should have either a C<include leaf.mk> or C<include node.mk> line
+# POD depending on what the contents of that folder are.
+# POD
+# POD This allows for special rules to be defined for these types of directories.
+# POD
+# POD Within every directory there needs to be a C<Makefile> and a C<depth.mk>. The
+# POD C<depth.mk>. The makefile includes the depth.mk file, which in turn defines:
+# POD 
+
+m4doc_GRAYTABLE(
+# POD    DEPTH=../..
+# POD    GLOBALDIR=$(DEPTH)/CodeGenerator/make
+)
+
+# POD 
+# POD $DEPTH is relative to the $TOP directory. 
+# POD $GLOBALDIR is slightly misnamed, but essentially derives the make library directory
+# POD from the $DEPTH variable.
+# POD 
+# POD $GLOBALDIR then becomes critical in the makefile for C<include>ing the libraries
+# POD that it depends on. Currently there is only a couple of libraries that are useful
+# POD for listgen:
+# POD 
+# POD =over 4
+# POD 
+# POD =item *
+# POD 
+# POD listgen - defines the build and deploy rules
+# POD 
+# POD =item *
+# POD 
+# POD m4rules - defines the m4 file conversions
+# POD 
+# POD =back
+# POD 
+# POD =head1 Why Makefiles?
+# POD 
+# POD Make is a good UI wrapper around a bunch of shell script rules. That is the main purpose.
+# POD 
+# POD In the larger scheme of things, it is a good idea to code the steps in a process, even if
+# POD I think it is a one-time process. The reason is that likely, it isn't a one-time process,
+# POD or there are other similar things that I need to do on a daily basis, and if I can at least
+# POD copy and paste code, I don't have to re-type it. Best case scenario, if a library exists,
+# POD I can just resuse it. Using Make is a VERY simple way of maintaining these libraries.
+# POD 

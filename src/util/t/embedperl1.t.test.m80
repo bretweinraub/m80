@@ -1,0 +1,10 @@
+# $m80path = [{command => "embedperl.pl"  }]
+
+<: 
+    use Carp;
+
+    confess "test failed" unless $ENV{M80PATH_FILE} eq "embedperl1.t.test.m80";
+
+:>
+
+The m80 path file is <:= $ENV{M80PATH_FILE} :>.

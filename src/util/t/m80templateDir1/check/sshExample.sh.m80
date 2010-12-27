@@ -1,0 +1,14 @@
+<: 
+# $m80path = [{ command => "embedperl.pl"}, {command => 'm4' , chmod => "+x" }];
+use sshHelpers;
+:>
+<:= sshHelpers::sshShellScript ( r => [] ) :>
+
+docmd echo I am in a ssh script on box \$(hostname)
+
+printmsg hey its me
+
+docmd cd /shazz
+
+<:= &sshHelpers::endSshShellScript :>
+

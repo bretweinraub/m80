@@ -1,0 +1,127 @@
+\input texinfo   @c -*-texinfo-*-
+
+
+
+
+
+
+
+
+
+@c %**start of header
+@setfilename 
+@settitle M(v)80 1.x Technical Requirements
+@c %**end of header
+
+@titlepage
+@titlefont{M(v)80 1.x Technical Requirements}
+@title M(v)80 1.x Technical Requirements
+
+
+@c-----------------------------------------------------------------------------
+@node Main Feature Sets
+@chapter Main Feature Sets
+@c-----------------------------------------------------------------------------
+
+
+@enumerate
+@item Freeware distributable installation model.
+@item Project builder/maker.
+@item Build/Upgrade Tool.
+@item Code generation libraries.
+@item Database management utilities.
+@end enumerate
+
+@c-----------------------------------------------------------------------------
+@node Freeware distributable installation model.
+@chapter Freeware distributable installation model.
+@c-----------------------------------------------------------------------------
+
+@c-----------------------------------------------------------------------------
+@node Distribution Type
+@section Distribution Type
+@c-----------------------------------------------------------------------------
+
+
+@item The software should be available as a gzipped tar file.  Upon download the entire source should be installable with a simple: ``./configure; make install''
+
+@c-----------------------------------------------------------------------------
+@node Use Of Autotools
+@section Use Of Autotools
+@c-----------------------------------------------------------------------------
+
+
+@item The distribution itself should be maintained with the GNU autotools suite.  The tarball itself will be output of a ``make dist'' command in the source.
+
+@c-----------------------------------------------------------------------------
+@node Additional Modules
+@section Additional Modules
+@c-----------------------------------------------------------------------------
+
+
+@item Optional add-ons should be available as separate distributions.  This can install into optional directories like "site-m80" as with perl.  Individual utilities in m80 should have access to a consistent interface that can interrogate the modules that are installed on a particular machine to determine what is available.
+
+@c-----------------------------------------------------------------------------
+@node Upgrade Constraints
+@section Upgrade Constraints
+@c-----------------------------------------------------------------------------
+
+
+@item Upgrades need to happen in a managed fashion.  This means that upgrading m80 should never break an existing m80 project.  Some clever versioning will probably be required at the utility/macro level.
+
+@item One implementation alternative is that for objects that are "upgradeable" (as opposed to replaceable), the code-generation source that produces the deliverable object must be archived so that upgrades to m80 do not invalidate notions of "baselined" code.
+
+@c-----------------------------------------------------------------------------
+@node Project Builder/Maker
+@chapter Project Builder/Maker
+@c-----------------------------------------------------------------------------
+
+
+@c-----------------------------------------------------------------------------
+@node Overview
+@section Overview
+@c-----------------------------------------------------------------------------
+
+
+@item Once m80 is installed, a set of utilities is required to make the m80 backend available to any generic project.
+@item These utilities will need to support the notion of a ``simple'' or ``complex'' project.  Simple as defined by a single module with no hierarchy, or ``complex'' as hierarchical collection of modules and module groups.
+
+@c-----------------------------------------------------------------------------
+@node Notion of a Project
+@section Notion of a Project
+@c-----------------------------------------------------------------------------
+
+@item A project means a collection of code of namespaces (or environments) and associated modules (or module groups) that can be associated in a ``build''.
+@c-----------------------------------------------------------------------------
+@node Notion of an ``environment''
+@section Notion of an ``environment''
+@c-----------------------------------------------------------------------------
+
+@c-----------------------------------------------------------------------------
+@node Support for ``core'' (multi-project, multi-environment) variables
+@section Support for ``core'' (multi-project, multi-environment) variables
+@c-----------------------------------------------------------------------------
+
+@c-----------------------------------------------------------------------------
+@node ``Create New Project'' utility
+@section ``Create New Project'' utility
+@c-----------------------------------------------------------------------------
+
+@c-----------------------------------------------------------------------------
+@node ``Create New Environment'' utility
+@section ``Create New Environment'' utility
+@c-----------------------------------------------------------------------------
+
+@c-----------------------------------------------------------------------------
+@node ``Create New Module'' utility
+@section ``Create New Module'' utility
+@c-----------------------------------------------------------------------------
+
+@c-----------------------------------------------------------------------------
+@node ``Create Module Group'' utility
+@section ``Create Module Group'' utility
+@c-----------------------------------------------------------------------------
+
+
+
+@bye

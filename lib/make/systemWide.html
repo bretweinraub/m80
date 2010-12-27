@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>File level documentation for systemWide.mk</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#systemwide.mk">systemWide.mk</a></li>
+	<ul>
+
+		<li><a href="#intro">Intro</a></li>
+	</ul>
+
+	<li><a href="#rules">Rules</a></li>
+	<ul>
+
+		<li><a href="#env">env</a></li>
+		<li><a href="#m4command">m4command</a></li>
+		<li><a href="#releaseversion">releaseVersion</a></li>
+		<li><a href="#targetmap.mk">targetMap.mk</a></li>
+		<li><a href="#newcomponent">newComponent</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="systemwide.mk">systemWide.mk</a></h1>
+<p>
+</p>
+<h2><a name="intro">Intro</a></h2>
+<p>systemWide.mk holds globally available rules. THESE RULES ARE AVAILABLE IN ALL
+NODES AND LEAVES.</p>
+<p>
+</p>
+<hr />
+<h1><a name="rules">Rules</a></h1>
+<p>
+</p>
+<h2><a name="env">env</a></h2>
+<p><code>make env </code></p>
+<p>List all the env variables - this includes all the $(MAKE) variables</p>
+<p>
+</p>
+<h2><a name="m4command">m4command</a></h2>
+<p><code>make m4command </code></p>
+<p>Spit out just the m4 command that will be run in this path</p>
+<p>
+</p>
+<h2><a name="releaseversion">releaseVersion</a></h2>
+<p><code>make releaseVersion </code></p>
+<p>Check the environment for a $(VERSION) variable. Confirms the value in it.</p>
+<p>
+</p>
+<h2><a name="targetmap.mk">targetMap.mk</a></h2>
+<p><code>make targetMap.mk </code></p>
+<p>create a file that gives a list of targets to build. This is useful in 
+tool directories, because it uses the list of *.m4 files to generate the rules
+that are available. It creates a &lt;filename&gt; rule and a &lt;filename&gt;_debug rule. The
+debug rule will output the contents of the log file that results from running 
+the rule</p>
+<p>
+</p>
+<h2><a name="newcomponent">newComponent</a></h2>
+<p><code>make newComponent </code></p>
+<p>When run in a directory below the tree, it will prompt for $NAME of the new
+component (the directory name) and the $TYPE of the component (currently listgen ONLY).
+It will create the appropriate depth and makefile files in the new location. Part of
+the makefile and depth.mk file generation process requires the user to decide if this
+new component is a node of a leaf. The main difference (currently) is that nodes can
+recurse their subnodes, leaves cannot. Leaves have access to generating documentation,
+nodes do not.</p>
+
+</body>
+
+</html>

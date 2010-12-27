@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<TITLE>File level documentation for leaf.mk.m4</TITLE>
+<LINK REV="made" HREF="mailto:gp@familiehaase.de">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#leaf.mk">Leaf.mk</A></LI>
+	<UL>
+
+		<LI><A HREF="#intro">Intro</A></LI>
+	</UL>
+
+	<LI><A HREF="#rules">Rules</A></LI>
+	<UL>
+
+		<LI><A HREF="#pod">pod</A></LI>
+	</UL>
+
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="leaf.mk">Leaf.mk</A></H1>
+<P>
+<H2><A NAME="intro">Intro</A></H2>
+<P>Leaf.mk is a file that is used for all leaves in a directory tree. It defines a 
+rule for converting files into POD format.</P>
+<P>
+<HR>
+<H1><A NAME="rules">Rules</A></H1>
+<P>
+<H2><A NAME="pod">pod</A></H2>
+<P><CODE>make pod</CODE></P>
+<P>Greps the files in that directory for a line ``DOPOD''. This is a trigger that the
+file needs to be converted to documentation. Then all lines that start with the
+comment:
+<CODE># POD </CODE> 
+get pulled out, the comment stripped off of them, and passed
+through the pod2html intepreter that is part of the perl distribution.</P>
+<P>Tips for writing POD include:</P>
+<UL>
+<LI>
+Don't put anything on blank lines, they won't pass through the interpreter.
+<P></P>
+<LI>
+Do start your documentation on LINE 1 !
+<P></P>
+<LI>
+Use <CODE>=head1</CODE> and <CODE>=head2</CODE> commands
+<P></P>
+<LI>
+full pod docs are at <A HREF="http://www.perldoc.com/perl5.6.1/pod/perlpod.html|pod">http://www.perldoc.com/perl5.6.1/pod/perlpod.html|pod</A>
+<P></P></UL>
+<P>Brad is cool!</P>
+
+</BODY>
+
+</HTML>

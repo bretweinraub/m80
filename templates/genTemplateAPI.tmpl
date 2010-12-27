@@ -1,0 +1,150 @@
+# -*-perl-*-
+# $m80path =[{ command => 'embedperl.pl' }]
+# I expect this to have access to M80PATH <:= "@main::M80PATH":>
+#
+
+<:
+#    package TemplateAPI;
+use Carp;
+use Env;
+
+my @localm80path = ();
+my $NAMESPACE = '';
+my $NEWLABEL = ['n_'];
+my $UPGRADELABEL = ['u_'];
+
+my $M80LIBPATH = `m80 --libpath`; chomp $M80LIBPATH; my $M80PERLPATH = "$M80PATH/perl";
+@main::M80PATH = grep { ! /$M80PERLPATH/ } @main::M80PATH;
+push @main::M80PATH, "$M80LIBPATH/../templates";
+# @localm80path = @main::M80PATH;
+
+# #
+# # This is a cleanup step to post process the M80PATH
+# # variable. After this, the paths should all be uniq
+# #
+# _dump_env();
+# my @TMP_M80PATH = ();
+# for (my $i = 0; $i < @localm80path; $i++) { 
+#     &main::debugprint(" M80PATH was: $localm80path[$i]") ; 
+#     $localm80path[$i] = eval "return \"$localm80path[$i]\";"; 
+#     &main::debugprint(" M80PATH is: $localm80path[$i]") ; 
+#     push @TMP_M80PATH, TemplateAPI::_expand_paths($localm80path[$i]);
+# }
+# @localm80path = @TMP_M80PATH; undef @TMP_M80PATH;
+
+# my $_max_expand_paths = 100;
+# my $_i_max_expand_paths = 0;
+# sub _expand_paths {
+#     my ($potential_path) = @_;
+#     my @out = ();
+
+#     die "Exceeded path expansion recursion limit on $potential_path - fix yer metadata\n" 
+#         if $_i_max_expand_paths > $_max_expand_paths;
+#     &main::debugprint( "_expand_paths: got $potential_path\n" );
+#     return ($potential_path) if (-d "$potential_path");
+    
+#     $potential_path =~ s/^\$//;
+#     my @new_value = split(/:|,|\s+/, $potential_path);
+#     for $v (@new_value) {
+#         &main::debugprint( "_expand_paths: checking $v in env hash"); 
+#         if (exists $main::ENV{$v}) {
+#             $_i_max_expand_paths++;
+#             &main::debugprint( "_expand_paths: recursing on $v -> $main::ENV{$v}\n") ;
+#             push @out, &TemplateAPI::_expand_paths($main::ENV{$v});
+#             $_i_max_expand_paths--;
+#         } elsif (exists $main::ENV{$v . "_MAP"}) {
+#             $_i_max_expand_paths++;
+#             &main::debugprint( "_expand_paths: recursing on $v" . "_MAP -> ", $main::ENV{$v . "_MAP" } , "\n") ;
+#             push @out, &TemplateAPI::_expand_paths($main::ENV{$v . "_MAP"});
+#             &main::debugprint( "_expand_paths: recursed on $v" . "_MAP -> ", $main::ENV{$v . "_MAP" } , "\n") ;
+#             $_i_max_expand_paths--;
+#         }
+
+#     }
+#     return @out;
+# }
+
+# sub _dump_env {
+#     for $k (keys %ENV) {
+#         main::debugprint( "_dump_env: $k -> $ENV{$k}" );
+#       }
+# }
+
+
+sub CreateFunctionString {
+    my ($name, $body) = @_;
+    my $o .= '';
+    $name =~ s/-/_/g;  # underscores
+    $name =~ s/\.(mk|sh|m4|m80|tmpl|mdl)$//; # truncate file extensions (if it is a file)
+    for $n (@$NEWLABEL) {
+        $o .= "\nfunction $NAMESPACE$n$name { $body ; } ;\n";
+    }
+    for $u (@$UPGRADELABEL) {
+        $o .= "\nfunction $NAMESPACE$u$name { $body ; } ;\n";
+    }
+    return $o;
+}
+
+sub CreateTemplateString {
+    my $o = '';
+    &main::debugprint( "\n***CreateTemplateString!!***\n" );
+    for my $dir (@main::M80PATH) {
+        next if $dir eq '.';
+        my $absolutedir = `cd $dir && pwd`; chomp $absolutedir;
+
+        &main::debugprint( "CreateTemplateString: looking at dir $dir - $absolutedir.\n" );
+        opendir(D, $dir) || croak "unable to open dir $dir: $!";
+        my @templates = grep { ! /^\.+/ } 
+                        grep { ! /~$/ } 
+                        grep { ! /.initial$/ } 
+                        grep { ! /.iter$/ } readdir(D);
+        closedir(D);
+
+        for my $t (@templates) {
+            &main::debugprint( "CreateTemplateString: evaling $dir/$t\n" );
+            if (-d "$dir/$t") {
+
+                # it is a dir and there is a manifest file.
+                if (-f "$dir/$t/manifest.pl") {
+                    { # localscope the temlpate definition
+                        my $body = 'm80templateDir ';
+                        local %template_definition = ();
+                        require "$dir/$t/manifest.pl";
+                        # overwrite the --source  andination definitions if any.
+                        delete $template_definition{ source } if $template_definition{ source };
+                        delete $template_definition{ dest } if $template_definition{ dest };
+
+                        for my $k (keys %template_definition) {
+                            if (ref($template_definition{$k})) {
+                                if (ref($template_definition{$k}) eq 'ARRAY') {
+                                    for $x ( @{ $template_definition{$k} } ) {
+                                        $body .= " --$k $x";
+                                    }
+                                } elsif (ref($template_definition{$k}) eq 'CODE') {
+                                    $body .= &{ $template_definition{$k} }();
+                                }
+                            } else {
+                                $body .= " --$k $template_definition{$k}";
+                            }
+                        }
+
+                        $body .= " --source $absolutedir/$t \$*";
+                        $o .= CreateFunctionString($t, $body);
+                    }
+                # it is a dir, but there is no manifest file
+                } else {
+                    $o .= CreateFunctionString($t, "m80templateDir --source $absolutedir/$t \$*");
+                }
+                
+            # it is a file
+            } elsif (-f "$dir/$t") {
+                $o .= CreateFunctionString($t, "m80templateDir --source $absolutedir/$t \$*");
+            }
+        }
+    }
+    return $o;
+}
+:>
+
+<:=&CreateTemplateString:>
+

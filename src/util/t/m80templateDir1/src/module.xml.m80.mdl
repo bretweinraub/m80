@@ -1,0 +1,61 @@
+<!-- begin module.xml for <: &moduleHelpers::moduleName; :>  $m80path = [{command => "cat", expandOnce => 1 }]  -->
+
+<!--
+
+*** NOTE ***
+This file is generated from a templated system. When you edit this file, you will want to change the "cat"
+command in the directive on the top line to something more appropriate, probably "embedperl".
+
+-->
+
+
+<tasks>
+<!--
+
+  Tasks are entry points into the StateMachine. The default functionality is to
+  execute an Action with the same name as the task. This can be overridden with the
+  'startAction' attribute. Another Attribute that is used alot is the 'requiredData'
+  Attribute.
+
+For Example:
+  <task name="run" requiredData=""/>
+
+-->
+
+</tasks>
+
+<actions>
+<!--
+
+Actions are the actual workers scripts. There are perl library functions that make life a 
+little easier. Some examples are:
+
+moduleHelpers::simpleAction( n => 'run', 
+			     t => q('post-' . $thistask->getProperty(taskname) . '-' . $thistask->getProperty(actionname)) ) ; 
+
+moduleHelpers::externalReturnAction( n => loadCollections,
+				     t => getInstallerVersion,
+				     m => $adminServerThisTestMapper,
+				     T => [layDownInstaller]);
+
+moduleHelpers::chainActions( m => $adminServerThisTestMapper,
+			     a => [getInstallerVersion,
+				   setBEAHome,
+				   buildRemoteDirs,
+				   {n => pushRemoteTools, 
+				    e => true, # external action syntax
+				    T => [layDownInstaller]}, 
+				   remoteFetchInstaller,
+				   genSilentXML,
+				   runSilentInstall,
+				   checkForExistingToolsStage]);
+
+# moduleHelpers::parentAction causes a "wait" for child task.
+
+
+-->
+
+</actions>
+
+<!-- end module.xml for <: &moduleHelpers::moduleName; :> -->
+

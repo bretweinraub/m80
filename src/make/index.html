@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<TITLE>File level documentation for index.txt</TITLE>
+<LINK REV="made" HREF="mailto:gp@familiehaase.de">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#listgenerator/codegenerator makefile introduction">ListGenerator/CodeGenerator Makefile Introduction</A></LI>
+	<UL>
+
+		<LI><A HREF="#$top environment variable">$TOP Environment Variable</A></LI>
+		<LI><A HREF="#directory structures">Directory Structures</A></LI>
+	</UL>
+
+	<LI><A HREF="#why makefiles">Why Makefiles?</A></LI>
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="listgenerator/codegenerator makefile introduction">ListGenerator/CodeGenerator Makefile Introduction</A></H1>
+<P>The code generator is an application that takes HTML pages and turns them into ListGenerator or PreferenceCenter ASP applications. It does this by reading in the files, parsing, prompting the user for a map between source HTML and target Database to build a map, then writing out the ASP. This model works well, until the code generator needs to change. Custom client development is unsupported in this model.</P>
+<P>This rev of the code generator creates a framework for development to happen in. Developers are allowed to create and extend libraries that map to different levels of client code. This allows 2 things:</P>
+<OL>
+<LI>
+The developers can extend the code base of the code generator in a managed way.
+<P></P>
+<LI>
+The framework creates a deploy environment that can be used to easily upgrade a client with new features or the latest bugfix.
+<P></P></OL>
+<P>
+<H2><A NAME="$top environment variable">$TOP Environment Variable</A></H2>
+<P>$TOP is the only environment variable that is necessary for the
+system. It defines the top level directory. This directory contains
+the CodeGenerator and Source folders. If you don't set this variable
+the system will throw an error before doing anything, and currently this
+error will create a bunch of messages that don't make any sense, but
+won't kill processing. Be aware of this!</P>
+<P>
+<H2><A NAME="directory structures">Directory Structures</A></H2>
+<P>The make structure for the CodeGenerator is based on a tree structure.
+In any tree, there are nodes and there are leafs. A node contains sub-folders
+and a leaf does not. Therefore, the makefile that ultimately lives in a
+folder should have either a <CODE>include leaf.mk</CODE> or <CODE>include node.mk</CODE> line
+depending on what the contents of that folder are.</P>
+<P>This allows for special rules to be defined for these types of directories.</P>
+<P>Within every directory there needs to be a <CODE>Makefile</CODE> and a <CODE>depth.mk</CODE>. The
+<CODE>depth.mk</CODE>. The makefile includes the depth.mk file, which in turn defines:</P>
+<table bgcolor="#000000" cellspacing="0" cellpadding="1" border="0"><tr><td><table cellspacing="0" cellpadding="4" border="0" bgcolor="#e8e8e8"><tr><td><PRE>
+   DEPTH=../..
+   GLOBALDIR=$(DEPTH)/CodeGenerator/make</PRE>
+</td></tr></table></td></tr></table><P>$DEPTH is relative to the $TOP directory. 
+$GLOBALDIR is slightly misnamed, but essentially derives the make library directory
+from the $DEPTH variable.</P>
+<P>$GLOBALDIR then becomes critical in the makefile for <CODE>include</CODE>ing the libraries
+that it depends on. Currently there is only a couple of libraries that are useful
+for listgen:</P>
+<UL>
+<LI>
+listgen - defines the build and deploy rules
+<P></P>
+<LI>
+m4rules - defines the m4 file conversions
+<P></P></UL>
+<P>
+<HR>
+<H1><A NAME="why makefiles">Why Makefiles?</A></H1>
+<P>Make is a good UI wrapper around a bunch of shell script rules. That is the main purpose.</P>
+<P>In the larger scheme of things, it is a good idea to code the steps in a process, even if
+I think it is a one-time process. The reason is that likely, it isn't a one-time process,
+or there are other similar things that I need to do on a daily basis, and if I can at least
+copy and paste code, I don't have to re-type it. Best case scenario, if a library exists,
+I can just resuse it. Using Make is a VERY simple way of maintaining these libraries.</P>
+
+</BODY>
+
+</HTML>

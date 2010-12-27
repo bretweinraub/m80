@@ -1,0 +1,63 @@
+#!/bin/bash
+echo "I was hacked by pp"
+
+echo Function defined from inside ../../autofiles/pp 
+
+echo "This text was included via a pp _ import call"
+echo "This text was included via a pp _ import call"
+
+echo This text follows the import call.
+
+echo Now  if_else
+echo This is successful
+echo The  result should have been success
+echo This is a failure
+echo The  result should have been failure
+
+echo looping functionality
+echo list loop: 1
+echo list loop: 2
+echo list loop: 3
+echo list loop: 4
+echo list loop: 5
+
+echo list loop: a, b, c, d
+
+echo following loops will fail expansion
+
+
+echo end looping functionality
+
+echo shell env
+
+/bin/sh
+
+echo shell env again with shorthand
+
+/bin/sh
+
+echo again...
+
+/bin/sh
+
+echo again...
+
+-I/bin/sh
+
+echo NOT again...
+
+$SHELL
+
+echo DONT expand
+
+${SHELL}
+
+echo DONT expand
+
+set > ${_m80_env_dir}/${PWD//\//}
+
+echo end shell
+
+
+
+

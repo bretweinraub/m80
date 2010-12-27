@@ -1,0 +1,12 @@
+
+
+    if [ $# -gt 0 ]; then
+	set $*
+    else
+	return 1
+    fi
+    while [ $# -gt 0 ]; do
+        test -n "$DEBUG" && { echo $1 ; };
+	shift
+    done
+

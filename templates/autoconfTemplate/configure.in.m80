@@ -1,0 +1,157 @@
+dnl $m80path = [{ command => 'embedperl.pl' }]; -*-m4-*-
+dnl Process this file with autoconf to produce a configure script.
+define([THIS_PACKAGE_NAME],[<: if (defined $ENV{"package_name"}) { print "$ENV{'package_name'}"; } else { print "to_be_defined";}; :>])
+define([THIS_PACKAGE_VERSION],[<: if (defined $ENV{'package_version'}) { print "$ENV{'package_version'}"; } else { print "to_be_defined";}; :>])
+define([THIS_PACKAGE_PREFIX],[<: if (defined $ENV{'package_prefix'}) { print "$ENV{'package_prefix'}"; } else { print "/usr/local";}; :>])
+
+dnl $1:script to run, $2: external directory
+AC_DEFUN([EXTERNAL_SCRIPT],
+[AC_MSG_CHECKING([external script $1])
+# dnl might should be AC_CONFIG_COMMANDS?
+(cd $2; ./$1 > $1.res 2>&1);
+if test $? -ne 0; then
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([The external script $1 failed to execute correctly. Look at $2/$1.res])
+else
+  AC_MSG_RESULT([yes])
+fi])
+
+
+AC_INIT(THIS_PACKAGE_NAME,THIS_PACKAGE_VERSION)
+
+AM_INIT_AUTOMAKE
+
+AC_PREFIX_DEFAULT([THIS_PACKAGE_PREFIX/THIS_PACKAGE_NAME])
+
+# things we use a lot that are probably safe to check for...
+AC_PATH_PROG([M4],[m4])
+AC_PATH_PROG([ECHO],[echo])
+AC_PATH_PROG([PERL],[perl])
+AC_PATH_PROG([BASH],[bash])
+AC_PATH_PROG([MAKE],[make])
+AC_PATH_PROG([MAKEINFO],[makeinfo])
+AC_PATH_PROG([WGET],[wget])
+AC_PATH_PROG([M80],[m80])
+
+AC_DEFUN([MY_ARG_WITH],
+[AC_ARG_WITH([$1],
+             AC_HELP_STRING([--with-$1], [use $1 (default is $2)]),
+             ac_cv_use_$1=$withval, ac_cv_use_$1=no)
+AC_CACHE_CHECK(whether to use $1, ac_cv_use_$1, ac_cv_use_$1=$2)])
+
+AC_DEFUN([MY_ARG_ENABLE],
+[AC_ARG_ENABLE([$1],
+             AC_HELP_STRING([--enable-$1], [use $1 (default is $2)]),
+             ac_cv_use_$1=$enableval, ac_cv_use_$1=$2)
+AC_CACHE_CHECK(whether to use $1, ac_cv_use_$1, ac_cv_use_$1=$2)])
+
+
+AC_MSG_CHECKING([for GNU m4])
+${M4} --help >/dev/null 2>&1
+if test $? -ne 0; then
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([make sure GNU m4 is picked first in your path])
+else
+  AC_MSG_RESULT([yes])
+fi
+
+AC_MSG_CHECKING([for GNU make])
+${MAKE} --help >/dev/null 2>&1
+if test $? -ne 0; then
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([make sure GNU make is picked first in your path])
+else
+  AC_MSG_RESULT([yes])
+fi
+
+AC_MSG_CHECKING([for working echo -n])
+for x in /bin/echo /usr/bin/echo /usr/ucb/echo echo; do
+    lines=`$x -n | wc -l` > /dev/null 2>&1
+    if test $lines -eq 0 -a $? -eq 0 ; then
+       PRINTDASHN="$x"
+       AC_MSG_RESULT([${PRINTDASHN}])
+       break
+    fi
+done
+
+MAKEINFO_REQUIRED_VERSION=4.2
+AC_MSG_CHECKING([for texinfo version >= ${MAKEINFO_REQUIRED_VERSION}])
+makeinfoVersion=`${MAKEINFO} --version | awk 'NR == 1 && $NF >= '${MAKEINFO_REQUIRED_VERSION}' {print $NF}'`
+if test -z "${makeinfoVersion=}"; then
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([You need texinfo version >= ${MAKEINFO_REQUIRED_VERSION} .... its not that hard really; see http://www.gnu.org/software/texinfo/])
+else
+  AC_MSG_RESULT([yes])
+fi
+
+if test -z "$PRINTDASHN" ; then
+   AC_MSG_ERROR([could find not an echo that understands the -n flag])
+fi
+
+AC_SUBST(PRINTDASHN)
+
+AC_DEFUN([AC_CHECK_PERL_MODULES],[dnl
+AC_MSG_CHECKING([for perl module $1])
+$PERL -M$1 -e exit >/dev/null 2>&1
+if test $? -ne 0; then
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([you should fire up "$PERL -MCPAN -e 'install $1'", and then re-run configure])
+else
+  AC_MSG_RESULT([yes])
+fi
+])
+
+
+dnl MY_ARG_ENABLE([xml], [no])
+dnl test "x$ac_cv_use_xml" = "xyes" && {
+dnl AC_CHECK_PERL_MODULES(XML::XPath)
+dnl AC_CHECK_PERL_MODULES(XML::Simple)
+dnl }
+dnl 
+dnl MY_ARG_ENABLE([maintainer], [no])
+dnl test "x$ac_cv_use_maintainer" = "xyes" && {
+dnl AC_CHECK_PERL_MODULES(WWW::Mechanize)
+dnl AC_CHECK_PERL_MODULES(Log::Log4perl)
+dnl }
+
+<:
+if ($ENV{'roles'}) {
+    for my $role_pair (split /;/, $ENV{'roles'}) {
+        if ($role_pair) {
+            my ($role, $val) = split /=/, $role_pair;
+            print "MY_ARG_ENABLE([" . lc($role) . "], [yes])\n";
+            print "AM_CONDITIONAL([" . uc($role) . 
+                "_OPT], [test \"x\$ac_cv_use_" . lc($role) . "\" = \"xyes\"])\n";
+        }
+    }
+    print "MY_ARG_ENABLE([all], [yes])\n";
+    print "AM_CONDITIONAL([ALL_OPT], [test \"x\$ac_cv_use_all\" = \"xyes\"])\n";
+}
+:>
+
+dnl This will run the external scripts by default - disable with --disable-ext-scripts
+<: if ($ENV{'external_scripts'}) { :>
+MY_ARG_ENABLE([externals],[yes])
+if test "x$ac_cv_use_externals" = "xyes"; then
+        echo "I will exec the external scripts"
+<:
+for my $script (split /\s/, $ENV{'external_scripts'}) {
+   print "EXTERNAL_SCRIPT($script, $ENV{'external_scripts_dir'})\n";
+}
+:>
+fi
+<: } :>
+
+
+# this is convienent for genning this statement:
+# f Makefile.am | grep -v '~' | cut -c3- | sed -e 's/.am//g' | tr "\n" " " | perl -nle 'print "AC_CONFIG_FILES([$_])";'
+<:
+my @makefiles = split /\s+/, $ENV{'makefiles'};
+for (my $i = 0; $i < scalar @makefiles; $i++) {
+        $makefiles[$i] =~ s,^\./,,;
+}
+print "AC_CONFIG_FILES(@makefiles)\n";
+:>
+
+AC_OUTPUT
+

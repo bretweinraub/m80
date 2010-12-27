@@ -1,0 +1,13 @@
+=pod
+
+=head1 DESCRIPTION
+
+This directory is for templated files that need to be
+expanded at runtime. There is a tool in shellHelpers that 
+can be used to aid in moving these files around:
+
+  print shellHelpers::genAndPushTemplate ( requiredVars => [testhome_unix],
+					 templateName => 'createDomain.py.m80',
+					 destination => '$testhome_unix'); 
+
+=cut

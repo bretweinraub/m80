@@ -1,0 +1,228 @@
+#! /bin/bash
+#
+# M80 ---- see the License file for restrictions
+#
+
+
+
+PROGNAME=${0##*/}
+TMPFILE=/tmp/${PROGNAME}.$$
+
+if [ -n "${DEBUG}" ]; then	
+	set -x
+fi
+
+PSCMD="ps axc"  
+
+
+
+
+
+
+
+
+
+#
+# $Header: /cvsroot/m80/m80/lib/shell/printmsg.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+#
+# Function:	printmsg
+#
+# Description:	generic error reporting routine.
+#               BEWARE, white space is stripped and replaced with single spaces
+#
+# Call Signature:
+#
+# Side Effects:
+#
+# Assumptions:
+#
+
+printmsg () {
+    if [ -z "${QUIET}" ]; then 
+	if [ $# -ge 1 ]; then
+	    /bin/echo -n ${M80_OVERRIDE_DOLLAR0:-$PROGNAME}:\($$\) >&2
+		while [ $# -gt 0 ]; do /bin/echo -n " "$1 >&2 ; shift ; done
+		if [ -z "${M80_SUPRESS_PERIOD}" ]; then
+		    echo . >&2
+		else
+		    echo >&2
+		fi
+	fi
+    fi
+}
+
+
+#
+# Function:	cleanup
+#
+# Description:	generic KSH funtion for the end of a script
+#
+# History:	02.22.2000	bdw	passed error code through to localclean
+#
+# $Id: cleanup.sh,v 1.2 2004/04/06 22:42:02 bretweinraub Exp $
+#
+
+cleanup () {
+    export EXITCODE=$1
+    shift
+    if [ $# -gt 0 ]; then
+	printmsg $*
+    fi
+    if [ -n "${DQITMPFILE}" ]; then
+	rm -f ${DQITMPFILE}
+    fi
+    if [ -n "${LOCALCLEAN}" ]; then
+	localclean ${EXITCODE} # this function must be set
+    fi
+    if [ ${EXITCODE} -ne 0 ]; then
+	# this is an error condition
+	printmsg exiting with error code ${EXITCODE}
+    else
+	printmsg done
+    fi
+    exit ${EXITCODE}
+}
+
+trap "cleanup 1 caught signal" INT QUIT TERM HUP 2>&1 > /dev/null
+
+
+require () {
+    while [ $# -gt 0 ]; do
+	#printmsg validating \$${1}
+	derived=$(eval "echo \$"$1)
+	if [ -z "$derived" ];then
+	    printmsg \$${1} not defined
+	    usage
+	fi
+	shift
+    done
+}
+
+
+
+
+
+LOCALCLEAN=true
+localclean () {
+    rm -f /tmp/${PROGNAME}.$$*
+    
+}
+
+
+
+usage () {
+  printmsg  I am unhappy ...... a usage message follows for your benefit
+  printmsg  Usage is -i {input_file} -o {output_file} -d {debug_flags} 
+
+printmsg command can be run with no arguments if one choses
+
+
+  cleanup 1
+} 
+
+OPTIND=0
+while getopts :i:o:d: c 
+    do case $c in        
+	i) export input_file=$OPTARG;;
+	o) export output_file=$OPTARG;;
+	d) export debug_flags=$OPTARG;;
+	:) printmsg $OPTARG requires a value
+	   usage;;
+	\?) printmsg unknown option $OPTARG
+	   usage;;
+    esac
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function debugprint {
+    test -n "$debug_flags" && printmsg "$*"
+}
+
+test -z "$input_file" && input_file=$1
+test -z "$output_file" && output_file=$2
+debugprint "input file: $input_file"
+debugprint "output file: $output_file"
+
+test -z "$input_file" && printmsg "specify input file" && exit 1
+test -z "$output_file" && printmsg "specify output file" && exit 1
+
+# 
+# this m4 command is grabbed from the environment that
+# created the script. It is derived from the generic.mk
+# in the autofiles directory!
+#
+
+m81=m81
+
+
+
+
+debugprint "About to grep $input_file for COMPILERS"
+export COMPILERS="$(grep COMPILERS $input_file | directiveParser.pl --directive COMPILERS ) $COMPILERS" 
+debugprint "About to grep $input_file for M80_COMPILERS"
+export COMPILERS="$(grep M80_COMPILERS $input_file | directiveParser.pl --directive M80_COMPILERS ) $COMPILERS"
+debugprint "About to grep $input_file for M80_VARIABLE"
+export REQUIRED_VALUES="$(grep M80_VARIABLE $input_file | directiveParser.pl --directive M80_VARIABLE ) $REQUIRED_VALUES"
+debugprint "About to grep $input_file for VARIABLE"
+export REQUIRED_VALUES="$(grep VARIABLE $input_file | directiveParser.pl --directive VARIABLE ) $REQUIRED_VALUES" 
+
+test -z "${QUIET}" && test -n "$REQUIRED_VALUES" && echo REQUIRED_VALUES are ${REQUIRED_VALUES}
+eval `varWarrior $REQUIRED_VALUES`
+
+test -z "${QUIET}" && echo $m81 -e 'exit 0' $DEBUG $COMPILERS generate $MACRO_DEFS --source $input_file $EXT  --destination $output_file 2\> $output_file.err
+
+eval $m81 -e 'exit 0' $DEBUG $COMPILERS generate $MACRO_DEFS --source $input_file $EXT  --destination $output_file 2> $output_file.err 
+
+test $? -ne 0 && { echo $m81 -e 'exit 0' $DEBUG $COMPILERS generate ERRORS bailing out; cat $output_file.err; exit 1; } ;
+chmod -f -w+x $output_file
+if test ! -s $output_file.err; then
+    rm -f $output_file.err
+else 
+    cat $output_file.err 
+fi
+
+
+
+# =pod
+
+# =head1 NAME
+
+# m81conv - m81 (embedperl.pl) transform a file using directives other than \$m80path
+
+# =head1 VERSION
+
+# This document describes 0.07.33 of m81conv
+
+# =head1 SYNOPSIS
+
+# C<< env DEBUG= COMPILERS= EXT='--conv ext' MACRO_DEFS= m81conv -d <debug flags> -i <input file> -o <output file> >>
+
+# OR
+
+# C<< m4conv <input file> <output file> >>
+
+# =head1 DESCRIPTION
+
+# Run a file through an m81 conversion like the old make rules do. Specify extensions other than the default
+# m80 extension with the $EXT env variable. 
+
+# =cut
+
+#
+# Local Variables:
+# mode: shell-script
+# End:
+# 
+

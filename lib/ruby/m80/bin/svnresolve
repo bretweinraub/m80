@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'ckuru-tools'
+
+['getoptlong',
+ 'ruby-debug',
+ 'rdoc/ri/ri_paths',
+ 'rdoc/usage']._require
+
+emacs_trace do
+  rev, dir = nil
+  no_windows = ""
+  opts = GetoptLong.new([ '--debug', '-d', GetoptLong::NO_ARGUMENT ],
+                        [ '--rev', '-r', GetoptLong::REQUIRED_ARGUMENT ],
+                        [ '--no-windows', '-n', GetoptLong::NO_ARGUMENT ],
+                        [ '--Dir', '-D', GetoptLong::REQUIRED_ARGUMENT])
+
+  opts.each do |opt, arg|
+    case opt
+    when '--no-windows'
+      no_windows = "-nw"
+    when '--Dir'
+      dir = arg
+    when '--rev'
+      rev = arg
+    end
+  end
+
+  raise "define --dir" unless dir
+  raise "define --rev" unless rev
+  Dir.chdir(dir) or raise "bad dir #{dir}"
+
+  files = `find . | grep '\.working$'`
+
+
+  files.each do |file| 
+    file.chomp!
+    mr = "#{file.gsub(/\.working/,"")}.merge-right.r#{rev}"
+    system "emacs #{no_windows} -cr gold -bg SlateBlue4 -fg white -geometry 170x71+0 --eval '(ediff-files \"'#{file}'\" \"'#{mr}'\")'"
+    system "cp #{file} #{file.gsub(/\.working/,"")} "
+    puts "cp #{file} #{file.gsub(/\.working/,"")} "
+    system "svn resolved #{file.gsub(/\.working/,"")}"
+    puts "svn resolved #{file.gsub(/\.working/,"")}"
+  end
+
+end
+

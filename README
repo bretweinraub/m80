@@ -1,0 +1,11 @@
+-*-text-*-
+
+DEPENDENCIES:
+
+1. (BASH) Proper functioning of m80 right now depends on the
+installation of bash. This is something that may well change
+(depending on the availibility of time and money).  Luckily you can
+have BASH installed anywhere, so if /usr/local/bin is verbotten on
+this box (and working for a more enlightened organization isn't an
+option) consider installing it in your home directory and re-running
+configure.

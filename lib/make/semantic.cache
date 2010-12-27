@@ -1,0 +1,15 @@
+;; Object make/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "make/"
+  :tables (list 
+   (semanticdb-table "oracle.mk"
+    :major-mode 'makefile-mode
+    :tags '(("$(M80_LIB)/make/dbgeneric.mk" include nil nil [2 39]) ("NOPASSWD_DATABASE_NAME" variable (:default-value ("$(shell echo $(DATABASE_NAME) | sed -e 's/\\/[a-zA-Z0-9_]*//g')")) nil [263 351]) ("DATABASE_NAME" variable (:default-value ("/nolog")) nil [377 398]) ("destructcheck" function nil nil [404 975]) ("database_name" function nil nil [976 1156]) ("%.log" function (:arguments ("%.ctl" "database_name")) nil [1334 1406]) ("%.log" function (:arguments ("%.log.dat")) nil [1407 1686]) ("%.sql.log" function (:arguments ("%.sql" "database_name" "$<")) nil [2278 2512]) ("%.pkb.log" function (:arguments ("%.pkb" "database_name" "$<")) nil [2526 2763]) ("%.pkg.log" function (:arguments ("%.pkg" "database_name" "$<")) nil [2763 3000]) ("%.log" function (:arguments ("%.sql" "database_name" "$<")) nil [3001 3221]))
+    :file "oracle.mk"
+    :pointmax 3222
+    )
+   )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0pre3"
+  :semanticdb-version "2.0pre3"
+  )

@@ -1,0 +1,48 @@
+#!/usr/bin/perl -I/home/sites/95264840/users/jim/app_install/share/m80/lib/perl - #-*-perl-*-
+#
+# PP is the perl-preprocessor. 
+#
+use Getopt::Long;
+require "base.plx";
+
+#
+# internal vars
+#
+my $help = 0;
+my %options = ();
+
+GetOptions('help|?' => \$help,
+	   'debug' => \$debug,
+	   'use-builtins' => \$PLX_INTERPRET_BUILTINS,
+	   'include:s' => \@PLX_INCLUDE_PATH,
+	   'max-recursions:i' => \$PLX_MAX_RECURSIONS,
+	   'D|options:s' => \%options,
+	   );
+
+my $usage =<<USAGE ;
+pp [ --help --debug --no-use-builtins --include <PATH> --max-recursions <INT> -D <keywords> --options=<keywords>] file
+
+pp will read STDIN which includes the file(list) and replace text matching function names in the main
+namespace with the return value of that function. This happens recursively.
+
+It will eval (in order)
+1) text in pp_divert and pp_undivert blocks
+2) text in <perl> </perl> blocks
+3) functions that pass arguments ( in no particular order )
+4) functions that don't pass arguments ( in no particular order )
+5) builtins ( in no particular order )
+
+USAGE
+die $usage if $help;
+
+foreach my $env (keys %ENV) {
+    $options{$env} = $ENV{$env} unless exists $options{$env}
+}
+
+#
+# Parse and recursively pp_expand the data.
+#
+print pp_expand( join("", (<>)), %options );
+1;
+
+

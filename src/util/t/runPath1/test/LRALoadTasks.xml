@@ -1,0 +1,193 @@
+  <tasks>
+    <task name="LRALoad"
+	  requiredData="$(task.LRController) $(task.LRControllerUser) $(task.LRAFile) $(env.LocalStageDirBase) $(task.Bucket_Size) $(task.LRControllerUser) $(task.VariationLabel) $(task.P4ChangeNumber) $(task.RunUser) $(task.RunDescription) $(task.RunTestType) $(task.RunSet) $(task.ETL.ArchiveFullResultsDir)"
+	  startAction="convertPaths"
+          maxParallelism="scalarValue(q(4))">
+    </task>
+  </tasks>
+
+  <actions>
+    <action name="convertPaths"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; ./convertPaths.pl)">
+      <!-- boy it would be really slick if this thing could transition to a step defined in the task -->
+      <!-- instead of using this "static" scoping -->
+      <!-- a Macro could work here also -->
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(fetchLRAFile))">
+	  <scope field="$(taskobj.taskname)" value="LRALoad"/>
+	</transition>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(fetchNetConfig))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="fetchLRAFile"
+	    isTransactional="true"
+	    maxFailures="1"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control fetchLRAfile)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(parseLRAFile))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="parseLRAFile"
+	    isTransactional="false"
+	    maxFailures="0"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control parseLRAfile)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(etlProps))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="etlProps"
+	    isTransactional="true"
+	    maxFailures="1"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control etlProps)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(parseProps))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="parseProps"
+	    isTransactional="true"
+	    maxFailures="1"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control parseProps)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(mungeProps))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="mungeProps"
+	    isTransactional="true"
+	    maxFailures="1"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control mungeProps)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="if($thistask->fetchContextSimple('p4.change.number') lt 954412) {$thistask->transitionTo(q(buildStageDirectory))} else {$thistask->transitionTo(q(parseXMLFiles))} "/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="parseXMLFiles"
+	    isTransactional="true"
+	    maxFailures="1"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control parseXMLFiles)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(buildStageDirectory))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="buildStageDirectory"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control stagedir)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(dumpSQLTables))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+
+    <action name="dumpSQLTables"
+	    isTransactional="true"
+	    maxFailures="5"
+	    maxParallelism="scalarValue(q(3))"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control dumpTables)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(fetchTables))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+
+    <action name="fetchTables"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make  -f Makefile.control fetchTables)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(dumpMeta))"/>  
+	<transition type="returnCode" value="2" code="$thistask->transitionTo(q(fetchTablesNoCompression))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+
+    <action name="fetchTablesNoCompression"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; env GZIP_NOCOMPRESSION=true make  -f Makefile.control fetchTables)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(dumpMeta))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+
+    <action name="dumpMeta"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make  -f Makefile.control dumpMeta)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(genTables))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+
+    <action name="genTables"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make  -f Makefile.control genTables)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(load))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+
+    <action name="load"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make  -f Makefile.control load)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(genSummaries))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+
+    <action name="genSummaries"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make  -f Makefile.control genSummaries)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(cleanup))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+
+    <action name="cleanup"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make  -f Makefile.control cleanup)">
+      <transitionMap>  
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(__SUCCESS__))"/>  
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>  
+      </transitionMap>  
+    </action>
+  </actions>

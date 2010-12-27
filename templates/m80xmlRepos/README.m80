@@ -1,0 +1,12 @@
+
+This is a m80 XML repository; created with m80 --newRepository.
+
+A quick note about the "envs" and "projects" directories.  They aren't strickly needed in
+an XML repository, as they are in the tagvalue repository.
+
+Typically the "bdf" template uses m80 include directives to pull in other bits of XML, so
+pathing is all relative in that case.
+
+
+
+

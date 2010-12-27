@@ -1,0 +1,339 @@
+#! /bin/bash
+#
+# M80 ---- see the License file for restrictions
+#
+
+
+
+PROGNAME=${0##*/}
+TMPFILE=/tmp/${PROGNAME}.$$
+
+if [ -n "${DEBUG}" ]; then	
+	set -x
+fi
+
+PSCMD="ps axc"  
+
+
+
+
+
+
+
+#
+# Copyright (c) 2002 Phideas Corporation.
+#
+###############################################################################
+#
+# File:		varWarrior.m4
+#
+# Description:	this script looks for its arguments in the environment.  If they
+#               aren't found there, then the user is prompted for them.
+#
+#               This script outputs code for another program to evaluate, and is
+#               almost always found in the following context:
+#
+#               eval `varWarrior VARIABLE1 VARIABLE2 VARIABLE3`
+#
+#               This is a convienent way for a program to insure that a set of
+#               variable are defined before continuing.
+#
+#               It also is designed to work with m4, and will output a statement
+#               like:
+#
+#               export MACRO_DEFS=" -DVARIABLE1='value1' -DVARIABLE2='value2' -DVARIABLE3='value3'"
+#
+#               that can be fed directly as command line args to m4.
+#
+#               A question can be specified by following a variable name with a '+':
+#
+#               varWarrior VARIABLE1+"Question 1" 
+#               Question 1 (env var VARIABLE1) ?  value 1
+#               export VARIABLE1="value 1" ;  export MACRO_DEFS=" -DVARIABLE1='value 1'"
+#
+# History:      Bret Weinraub           Author
+#
+# $Id: varWarrior.sh.m4,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+#
+##############################################################################
+
+
+
+#
+# $Header: /cvsroot/m80/m80/lib/shell/printmsg.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+#
+# Function:	printmsg
+#
+# Description:	generic error reporting routine.
+#               BEWARE, white space is stripped and replaced with single spaces
+#
+# Call Signature:
+#
+# Side Effects:
+#
+# Assumptions:
+#
+
+printmsg () {
+    if [ -z "${QUIET}" ]; then 
+	if [ $# -ge 1 ]; then
+	    /bin/echo -n ${M80_OVERRIDE_DOLLAR0:-$PROGNAME}:\($$\) >&2
+		while [ $# -gt 0 ]; do /bin/echo -n " "$1 >&2 ; shift ; done
+		if [ -z "${M80_SUPRESS_PERIOD}" ]; then
+		    echo . >&2
+		else
+		    echo >&2
+		fi
+	fi
+    fi
+}
+
+
+#
+# Function:	docmd
+#
+# Description:	a generic wrapper for ksh functions
+#
+# $Id: docmd.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+docmd () {
+    if [ $# -lt 1 ]; then
+	return
+    fi
+    #print ; eval "echo \* $*" ; print
+    eval "echo '$*'"
+    eval $*
+    RETURNCODE=$?
+    if [ $RETURNCODE -ne 0 ]; then
+	cleanup $RETURNCODE command \"$*\" returned with error code $RETURNCODE
+    fi
+    return 0
+}
+
+
+#
+# Function:	docmdq
+#
+# Description:	a generic wrapper for ksh functions, with no output
+#
+# $Id: docmdq.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+docmdq () {
+    if [ $# -lt 1 ]; then
+	return
+    fi
+    eval $*
+    RETURNCODE=$?
+    if [ $RETURNCODE -ne 0 ]; then
+	cleanup $RETURNCODE command \"$*\" returned with error code $RETURNCODE
+    fi
+    return 0
+}
+
+
+#
+# Function:	cleanup
+#
+# Description:	generic KSH funtion for the end of a script
+#
+# History:	02.22.2000	bdw	passed error code through to localclean
+#
+# $Id: cleanup.sh,v 1.2 2004/04/06 22:42:02 bretweinraub Exp $
+#
+
+cleanup () {
+    export EXITCODE=$1
+    shift
+    if [ $# -gt 0 ]; then
+	printmsg $*
+    fi
+    if [ -n "${DQITMPFILE}" ]; then
+	rm -f ${DQITMPFILE}
+    fi
+    if [ -n "${LOCALCLEAN}" ]; then
+	localclean ${EXITCODE} # this function must be set
+    fi
+    if [ ${EXITCODE} -ne 0 ]; then
+	# this is an error condition
+	printmsg exiting with error code ${EXITCODE}
+    else
+	printmsg done
+    fi
+    exit ${EXITCODE}
+}
+
+trap "cleanup 1 caught signal" INT QUIT TERM HUP 2>&1 > /dev/null
+
+
+#
+# Function:	docmdi
+#
+# Description:	execute a command, but ignore the error code
+#
+# $Id: docmdi.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+docmdi () {
+    if [ $# -lt 1 ]; then
+	return
+    fi
+#    print ; eval "echo \* $*" ; print
+    eval "echo '$*'"
+    eval $*
+    export RETURNCODE=$?
+    if [ $RETURNCODE -ne 0 ]; then
+	printmsg command \"$*\" returned with error code $RETURNCODE, ignored
+    fi
+    return $RETURNCODE
+}
+
+
+#
+# Function:	docmdqi
+#
+# Description:	execute a command quietly, but ignore the error code
+#
+# $Id: docmdqi.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+#
+
+docmdqi () {
+    if [ $# -lt 1 ]; then return; fi
+    DQITMPFILE=/tmp/${PROGNAME}.$$.dcmdqi
+    eval $* 2>&1 > ${DQITMPFILE}
+    export RETURNCODE=$?
+    if [ ${RETURNCODE} -ne 0 ]; then
+	cat ${DQITMPFILE} >&2
+    fi
+    rm -f ${DQITMPFILE}
+    return $RETURNCODE
+}
+
+
+#
+# Function:	checkfile
+#
+# Description:	This function is used to check whether some file ($2) or
+#               directory meets some condition ($1).  If not print out an error
+#               message ($3+).
+#
+# $Id: checkfile.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+checkfile () {
+    if [ $# -lt 2 ]; then
+	cleanup 1 illegal arguments to the checkfile \(\) function
+    fi
+    FILE=$2
+    if [ ! $1 $FILE ]; then
+	shift; shift
+	cleanup 1 file $FILE $*
+    fi
+}
+
+checkNotFile () {
+    if [ $# -lt 2 ]; then
+	cleanup 1 illegal arguments to the checkNotfile \(\) function
+    fi
+    FILE=$2
+    if [ $1 $FILE ]; then
+	shift; shift
+	cleanup 1 file $FILE $*
+    fi
+}
+
+
+
+
+LOCALCLEAN=true
+localclean () {
+    rm -f /tmp/${PROGNAME}.$$*
+    
+}
+
+
+
+usage () {
+  printmsg  I am unhappy ...... a usage message follows for your benefit
+  printmsg  Usage is -d {displayMissing=TRUE} -s {secureInput=TRUE} 
+
+printmsg command can be run with no arguments if one choses
+
+
+  cleanup 1
+} 
+
+OPTIND=0
+while getopts :ds c 
+    do case $c in        
+	d) export displayMissing=TRUE;;
+	s) export secureInput=TRUE;;
+	:) printmsg $OPTARG requires a value
+	   usage;;
+	\?) printmsg unknown option $OPTARG
+	   usage;;
+    esac
+done
+
+
+
+
+
+
+
+
+
+
+
+
+DEF_STRING=
+CPP_STRING=
+MISSING_STRING=
+
+
+while [ $# -gt 0 ]; do
+    fields=$(echo $1 | awk -F'+' '{print NF}') 
+    optional=$(echo $1 | awk -F'~' '{print NF}') 
+    case $fields in
+      1) variableName=$1
+         question="What is $variableName (env var $variableName) ? ";;
+      2) variableName=$(echo $1 | cut -d\+ -f1)
+         question=$(echo $1 | cut -d\+ -f2)" (env var $variableName) ? ";;
+    esac
+    displayName=$variableName
+    case $optional in
+      2) variableName=$(echo $1 | cut -d~ -f1)
+         displayName=$1;;
+    esac
+    derived=$(eval "echo \$"$variableName)
+    if [ -z "$derived" ]; then
+        if [ -z "$displayMissing" ]; then
+	  if [ $optional -lt 2 ]; then
+	    /bin/echo -n "$question " >&2
+	    test -n "${secureInput}" && {
+		stty -echo
+	    }
+	    read derived
+	    test -n "${secureInput}" && {
+		stty echo
+	    }
+          fi
+	else
+	    MISSING_STRING=${MISSING_STRING}"$displayName "
+	fi
+    fi
+    DEF_STRING=${DEF_STRING}"export $variableName=\"$derived\" ; "
+    CPP_STRING=${CPP_STRING}" -D"$variableName"="\'$derived\'
+    shift
+done
+
+if [ -z "$displayMissing" ]; then
+    echo "${DEF_STRING} export MACRO_DEFS=\"${CPP_STRING}\""
+else
+    echo "${MISSING_STRING}"
+fi
+
+# Setting \'shell-script-mode\' on the first line doesn\'t work
+#
+# Local Variables:
+# mode: shell-script
+# End:
+# 
+

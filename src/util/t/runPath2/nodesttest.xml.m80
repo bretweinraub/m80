@@ -1,0 +1,12 @@
+<!-- $m80path = [{command => "embedperl.pl"  }] -*-xml-*--> 
+
+<:
+    $this = "that";
+
+:>
+
+<:= $this :>
+
+
+
+

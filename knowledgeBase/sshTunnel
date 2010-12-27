@@ -1,0 +1,15 @@
+1.  Maps renwix.com port 5433 to local port 80
+
+ssh -l bret  -R5433:127.0.0.1:80 renwix.com
+
+2.  Maps a local port to renwix.com port 80.
+
+ssh -l jim -L5433:localhost:5433 renwix.com
+
+------------
+
+Here's the "real" way (production style)
+
+ssh -f -n -l bret  -R5433:127.0.0.1:80 renwix.com sleep 2147483647
+
+

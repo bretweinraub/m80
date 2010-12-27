@@ -1,0 +1,19 @@
+# -*-makefile-*-
+
+checkintest 	::;
+	make clean maintainer-clean
+	aclocal
+	autoreconf
+	./configure $(CONFIGURE_OPTS)
+	make
+	$(SUDO_COMMAND) make install && echo "looks good!"
+
+ac_config_files ::;
+	find . -type f | grep Makefile.am | grep -v '~' | cut -c3- | sed -e 's/.am//g' | tr "\n" " " | perl -nle 'print "AC_CONFIG_FILES([$$_])";'
+
+# need to get version number in here.... but you get the idea.
+upload	::;
+	lastDist=$$(find . -maxdepth 1  -type f | grep '^./m80-' | sort -rn | head -1) ; \
+	echo pushing $$lastDist ; \
+	ncftpput -u ftp -p '\-' upload.sourceforge.net incoming $$lastDist
+

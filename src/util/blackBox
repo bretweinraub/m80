@@ -1,0 +1,277 @@
+#! /bin/bash
+#
+# M80 ---- see the License file for restrictions
+#
+
+
+
+PROGNAME=${0##*/}
+TMPFILE=/tmp/${PROGNAME}.$$
+
+if [ -n "${DEBUG}" ]; then	
+	set -x
+fi
+
+PSCMD="ps axc"  
+
+
+
+
+
+
+
+
+#
+# $Header: /cvsroot/m80/m80/lib/shell/printmsg.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+#
+# Function:	printmsg
+#
+# Description:	generic error reporting routine.
+#               BEWARE, white space is stripped and replaced with single spaces
+#
+# Call Signature:
+#
+# Side Effects:
+#
+# Assumptions:
+#
+
+printmsg () {
+    if [ -z "${QUIET}" ]; then 
+	if [ $# -ge 1 ]; then
+	    /bin/echo -n ${M80_OVERRIDE_DOLLAR0:-$PROGNAME}:\($$\) >&2
+		while [ $# -gt 0 ]; do /bin/echo -n " "$1 >&2 ; shift ; done
+		if [ -z "${M80_SUPRESS_PERIOD}" ]; then
+		    echo . >&2
+		else
+		    echo >&2
+		fi
+	fi
+    fi
+}
+
+
+#
+# Function:	cleanup
+#
+# Description:	generic KSH funtion for the end of a script
+#
+# History:	02.22.2000	bdw	passed error code through to localclean
+#
+# $Id: cleanup.sh,v 1.2 2004/04/06 22:42:02 bretweinraub Exp $
+#
+
+cleanup () {
+    export EXITCODE=$1
+    shift
+    if [ $# -gt 0 ]; then
+	printmsg $*
+    fi
+    if [ -n "${DQITMPFILE}" ]; then
+	rm -f ${DQITMPFILE}
+    fi
+    if [ -n "${LOCALCLEAN}" ]; then
+	localclean ${EXITCODE} # this function must be set
+    fi
+    if [ ${EXITCODE} -ne 0 ]; then
+	# this is an error condition
+	printmsg exiting with error code ${EXITCODE}
+    else
+	printmsg done
+    fi
+    exit ${EXITCODE}
+}
+
+trap "cleanup 1 caught signal" INT QUIT TERM HUP 2>&1 > /dev/null
+
+
+require () {
+    while [ $# -gt 0 ]; do
+	#printmsg validating \$${1}
+	derived=$(eval "echo \$"$1)
+	if [ -z "$derived" ];then
+	    printmsg \$${1} not defined
+	    usage
+	fi
+	shift
+    done
+}
+
+
+
+#
+# Function:	docmd
+#
+# Description:	a generic wrapper for ksh functions
+#
+# $Id: docmd.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+docmd () {
+    if [ $# -lt 1 ]; then
+	return
+    fi
+    #print ; eval "echo \* $*" ; print
+    eval "echo '$*'"
+    eval $*
+    RETURNCODE=$?
+    if [ $RETURNCODE -ne 0 ]; then
+	cleanup $RETURNCODE command \"$*\" returned with error code $RETURNCODE
+    fi
+    return 0
+}
+
+
+#
+# Function:	docmdq
+#
+# Description:	a generic wrapper for ksh functions, with no output
+#
+# $Id: docmdq.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+docmdq () {
+    if [ $# -lt 1 ]; then
+	return
+    fi
+    eval $*
+    RETURNCODE=$?
+    if [ $RETURNCODE -ne 0 ]; then
+	cleanup $RETURNCODE command \"$*\" returned with error code $RETURNCODE
+    fi
+    return 0
+}
+
+
+#
+# Function:	checkfile
+#
+# Description:	This function is used to check whether some file ($2) or
+#               directory meets some condition ($1).  If not print out an error
+#               message ($3+).
+#
+# $Id: checkfile.sh,v 1.1.1.1 2003/11/26 22:24:33 bretweinraub Exp $
+
+checkfile () {
+    if [ $# -lt 2 ]; then
+	cleanup 1 illegal arguments to the checkfile \(\) function
+    fi
+    FILE=$2
+    if [ ! $1 $FILE ]; then
+	shift; shift
+	cleanup 1 file $FILE $*
+    fi
+}
+
+checkNotFile () {
+    if [ $# -lt 2 ]; then
+	cleanup 1 illegal arguments to the checkNotfile \(\) function
+    fi
+    FILE=$2
+    if [ $1 $FILE ]; then
+	shift; shift
+	cleanup 1 file $FILE $*
+    fi
+}
+
+
+
+#any code placed here will be included into script exithandler
+#by default the exit handler is called on INT QUIT TERM HUP
+#and by the "cleanup" shell function
+
+LOCALCLEAN=true
+localclean () {
+    rm -f /tmp/${PROGNAME}.$$*
+    
+}
+
+
+DIRNAME=$(dirname $0)
+
+localclean () {
+    rm -f /tmp/${PROGNAME}.$$.*
+}
+
+
+# ` reset shell script mode font locks (emacs display)
+
+usage () {
+    echo Usage: $PROGNAME: [-options]
+    echo '    -p' \<pid monitor for processes matching this string\>
+    echo '    -l' \<lsof for processes matching this string\>
+    echo '    -r' \<runtime directory\>
+    echo '    -n' \<netstat for connections matching this string\>
+    echo '    -M' \{use minute files\}
+    cleanup 1 invalid calling arguments
+}
+
+dateFormat="%m%d%Y"
+
+while getopts :p:l:r:Mn: c
+  do case $c in
+    p) pidString=$OPTARG;;
+    l) lsofString=$OPTARG;;
+    r) runtimeDirectory=$OPTARG;;
+    n) netstatString=$OPTARG;;
+    M) useMinuteFiles=TRUE;;
+    :) printmsg $OPTARG requires a value
+       usage;;
+    \?) printmsg unknown option $OPTARG
+       usage;;
+  esac
+done
+
+test -n "${useMinuteFiles}" && {
+    dateFormat="%m%d%Y%H%M"
+}
+
+command=docmdq
+test -n "${DEBUG}" && {
+    command=docmd
+}
+
+require runtimeDirectory
+
+${command} mkdir -p ${runtimeDirectory}
+
+checkfile -d ${runtimeDirectory} does not exist or is not a directory
+
+${command} cd ${runtimeDirectory}
+
+# goodDir - strips funky regexp characters out and converts them to '_'s
+#           so that we can create a directory based on this name.
+goodDir () {
+    if (($#==1)) ; then
+	echo $(echo $1 | sed -e 's/\//_/g;s/(/_/g;s/)/_/g;s/|/_/g;s/\$/_/g;s/\*/_/g;s/\\//g;s/ /_/g;s/\-/_/g')
+    fi
+}
+
+buildRunDir () {
+    if (($#==1)) ; then
+	newDir=${PROGNAME}/$(goodDir $1)
+	${command} mkdir -p $newDir
+	echo ${newDir}
+    fi
+}
+
+pidDir=$(buildRunDir ${pidString})
+lsofDir=$(buildRunDir ${lsofString})
+netstatDir=$(buildRunDir ${netstatString})
+
+date=$(date +${dateFormat})
+
+test -n "${pidString}" && {
+    date >> ${pidDir}/ps.${date}.log
+    ps auxww | awk '$2 !='$$ | egrep -i  ${pidString} | grep -v grep >> ${pidDir}/ps.${date}.log
+}
+
+test -n "${lsofString}" && {
+    date >> ${lsofDir}/lsof.${date}.log
+    lsof | egrep ${lsofString} >> ${lsofDir}/lsof.${date}.log
+}
+
+test -n "${netstatString}" && {
+    date >> ${netstatDir}/netstat.${date}.log
+    netstat -a | egrep ${netstatString} >> ${netstatDir}/netstat.${date}.log
+}
+
+exit 0

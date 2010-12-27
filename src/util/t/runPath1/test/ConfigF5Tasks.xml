@@ -1,0 +1,41 @@
+  <tasks>
+    <task name="ConfigF5"
+	  requiredData="$(task.LRControllerUser) $(task.LRController) $(task.NetConfigDir) $(task.NetConfigFile)"
+	  startAction="convertPaths">
+    </task>
+  </tasks>
+  <actions>
+    <!-- Actions Related to ConfigF5 -->
+    <action name="fetchNetConfig"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control fetchNetConfig)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(createPool))">
+	  <scope field="$(taskobj.taskname)" value="ConfigF5"/>
+	</transition>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(syncFramework))">
+	  <scope field="$(taskobj.taskname)" value="pushFramework"/>
+	</transition>
+        <transition type="returnCode" value="0" code="$thistask->transitionTo(q(getPushableFiles))">
+	  <scope field="$(taskobj.taskname)" value="netPush"/>
+	</transition>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo('post-fetchNetConfig-' . $thistask->getProperty(taskname))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <action name="createPool"
+	    isTransactional="true"
+	    maxFailures="5"
+	    exportTaskMetaData="true"
+	    command="(cd $(env.SQLServerAutomationDir) ; make -f Makefile.control _createPool)">
+      <transitionMap>
+	<transition type="returnCode" value="0" code="$thistask->transitionTo(q(__SUCCESS__))"/>
+	<transition type="returnCode" value="\d+" code="$thistask->transitionTo(q(__FAILED__))"/>
+      </transitionMap>
+    </action>
+
+    <!-- End Actions Related to ConfigF5 -->
+  </actions>

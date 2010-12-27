@@ -1,0 +1,8 @@
+
+Q.  My shell_getopt isn't working.
+
+A.  Have you re-used a shell argument?  If so you will have inconsistent results:
+
+shell_getopt((-s, SIMPLE),(d,-moduleName),(-a, APPEND),(-m, DOMAKE),(-c, CREATE),(-f, FORCE),(s, -SUFFIXES))
+
+WRONG (-s used twice).

@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>File level documentation for leaf.mk.m4</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#leaf.mk">leaf.mk</a></li>
+	<ul>
+
+		<li><a href="#intro">Intro</a></li>
+	</ul>
+
+	<li><a href="#rules">Rules</a></li>
+	<ul>
+
+		<li><a href="#pod">pod</a></li>
+	</ul>
+
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="leaf.mk">leaf.mk</a></h1>
+<p>
+</p>
+<h2><a name="intro">Intro</a></h2>
+<p>Leaf.mk is a file that is used for all leaves in a directory tree. It defines a 
+rule for converting files into POD format.</p>
+<p>
+</p>
+<hr />
+<h1><a name="rules">Rules</a></h1>
+<p>
+</p>
+<h2><a name="pod">pod</a></h2>
+<p><code>make pod</code></p>
+<p>Greps the files in that directory for a line ``DOPOD&quot;. This is a trigger that the
+file needs to be converted to documentation. Then all lines that start with the
+comment:
+<code># POD </code> 
+get pulled out, the comment stripped off of them, and passed
+through the pod2html intepreter that is part of the perl distribution.</p>
+<p>Tips for writing POD include:</p>
+<ul>
+<li></li>
+Don't put anything on blank lines, they won't pass through the interpreter.
+<p></p>
+<li></li>
+Do start your documentation on LINE 1 !
+<p></p>
+<li></li>
+Use <code>=head1</code> and <code>=head2</code> commands
+<p></p>
+<li></li>
+full pod docs are at <a href="http://www.perldoc.com/perl5.6.1/pod/perlpod.html|pod">http://www.perldoc.com/perl5.6.1/pod/perlpod.html|pod</a>
+<p></p></ul>
+<p>Brad is cool!</p>
+
+</body>
+
+</html>

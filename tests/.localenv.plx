@@ -1,0 +1,3 @@
+pp_get_parent_localenv
+
+export M80_LIB=test

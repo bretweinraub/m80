@@ -1,0 +1,4 @@
+psql:test.sql:2: NOTICE:  Drop cascades to trigger appointment_i on table appointment
+DROP FUNCTION
+CREATE FUNCTION
+CREATE TRIGGER

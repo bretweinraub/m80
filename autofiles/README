@@ -1,0 +1,5 @@
+
+The purpose of this directory is to contain files that
+pertain to the installation of this package via the
+GNU autotools suite; i.e. autoconf/automake/configure.
+

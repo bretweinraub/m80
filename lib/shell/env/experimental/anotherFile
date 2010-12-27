@@ -1,0 +1,17 @@
+
+<stdout>
+This
+is
+some
+more
+data.
+</stdout>
+
+<stdout>
+<<Makefile.am.test>>
+
+more data.
+
+</stdout>
+
+

@@ -1,0 +1,288 @@
+<HTML>
+<HEAD>
+<TITLE>File level documentation for rules_for_writing_m4_libraries.txt</TITLE>
+<LINK REV="made" HREF="mailto:gp@familiehaase.de">
+</HEAD>
+
+<BODY>
+
+<A NAME="__index__"></A>
+<!-- INDEX BEGIN -->
+
+<UL>
+
+	<LI><A HREF="#m4 libraries">M4 LIBRARIES</A></LI>
+	<LI><A HREF="#rules">RULES</A></LI>
+	<UL>
+
+		<LI><A HREF="#naming">NAMING</A></LI>
+		<LI><A HREF="#diverting">DIVERTING</A></LI>
+		<LI><A HREF="#quotes">QUOTES</A></LI>
+		<LI><A HREF="#namespace">NAMESPACE</A></LI>
+		<LI><A HREF="#dependency">DEPENDENCY</A></LI>
+		<LI><A HREF="#gotcha m4 variable names">GOTCHA M4 VARIABLE NAMES</A></LI>
+		<LI><A HREF="#test functions">TEST FUNCTIONS</A></LI>
+		<LI><A HREF="#structure">STRUCTURE</A></LI>
+		<LI><A HREF="#overriding macros">OVERRIDING MACROS</A></LI>
+	</UL>
+
+</UL>
+<!-- INDEX END -->
+
+<HR>
+<P>
+<H1><A NAME="m4 libraries">M4 LIBRARIES</A></H1>
+<P>Docs on the m4 library structure and how to add new ones</P>
+<P>
+<HR>
+<H1><A NAME="rules">RULES</A></H1>
+<P>
+<H2><A NAME="naming">NAMING</A></H2>
+<P>Library filename should be in all lowercase with a .m4 extension</P>
+<P>Macronames should be all uppercase with the appropriate prefix. See <A HREF="#namespace">NAMESPACE</A>.</P>
+<P>
+<H2><A NAME="diverting">DIVERTING</A></H2>
+<P>Only divert in the container, or main files. That will save some lines of output. And
+in almost all cases loading a library is done inside of it's own divert. Divert is an
+on and off switch, not a stack, so undiverting inside a library will turn off divert 
+for the main script. Be aware of this, and don't divert in libraries if possible.</P>
+<P>
+<H2><A NAME="quotes">QUOTES</A></H2>
+<P>Only use ``['' and ``]'' quotes in your libraries. The 1 exception to this is derivations of this
+pattern. (I.e. ``[['',``]]'' &amp; ``[[['',``]]]'' etc ...)</P>
+<P>This is because ``[['' resolves to ``'' the same as ``['' resolves to ``'' and under the context of ``['',``]'', 
+``[['',``]]'' still resolves to ``'' (it is just double quoted). This will allow for most file types, 
+although recursive macro expansion in this scenario hasn't been tested completely. Jim's guess is
+that there are cases where the quotes will mess up some base implementations.</P>
+<P>Simple expansions (only 1x expanded) will work just fine in this scenario.</P>
+<P>Also, calling <CODE>m4_changequote</CODE> to change to the current chars will throw an m4 error, so make sure
+that you call something obscure like <CODE>m4_changequote([++,++])</CODE> to clear the quotes before setting 
+the quotes. Quotes are the most confusing part of the m4 binary!</P>
+<PRE>
+ For example:
+    File1.m4 contains:
+         m4_divert(-1)
+         m4_changequote([,])
+         m4_include(file2.m4)
+         m4_divert</PRE>
+<PRE>
+    File2.m4 contains:
+         m4_divert(-1)
+         m4_changequote([,])
+         m4_define([],[])
+         m4_divert</PRE>
+<P>This scenario will fail! with an M4:EOF message. The reason is that the 2nd changequote is trying
+to set the quotes to what they already are. This is the case when libraries start loading each other
+or scripts load libraries, and their own functions... In this case, you must do:</P>
+<PRE>
+    File2.m4 contains:
+         m4_divert(-1)
+         m4_changequote([++,++])m4_dnl or some other set of chars!
+         m4_changequote([,])
+         m4_define([],[])
+         m4_divert</PRE>
+<P>This ``clears'' the quote setting before setting quotes. <STRONG>NOTE:</STRONG> If you use the ``tick'' and ``singlequote'' as your
+quote delimiters, you run into the same problem if the library is the first to load, since that is what the default characters are. Make sure that these
+quotes are unique, and likely never used to actually deliminate a library.</P>
+<P>M4:EOF error messages are standard when the quoting scheme is messed up. If you get one of these
+9 times out of 10 it is because there is a missing quote on a <CODE>m4_define</CODE> somewhere, or your
+<CODE>m4_ifelse</CODE> or <CODE>m4_ifdef</CODE> <EM>or a similar function</EM> is quoted improperly. These are <STRONG>nasty</STRONG> to
+find, so BE CAREFUL!</P>
+<P>
+<H2><A NAME="namespace">NAMESPACE</A></H2>
+<P>Each file needs to define it's own namespace. This is so that there aren't collisions across
+libaries creating *really* hard to track bugs. The namespace should be the same as the filename
+in uppercase. So if you write the ``somethingorother.m4'' library, all macros in your library
+should be implemented as: ``SOMETHINGOROTHER_MACRO''. Abbreviations are allowed, but need to
+be documented.</P>
+<P>base.m4 is *special*</P>
+<P>base is an extension of ``m4_'' therefore, all commands in this file should define m4_ as the
+prefix. This ISN'T done automatically (like it used to be). In general, when deciding if something
+is an extension to the base, you should ask yourself:
+  * Is it applicable to all libraries - is it infact ``extending'' the m4 base language?
+  * does this macro contain a bunch of other base m4 calls, and not much else?</P>
+<P>Yes to either of these (and likely both), and it is a good idea to put it in this file.</P>
+<P>
+<H2><A NAME="dependency">DEPENDENCY</A></H2>
+<P>There are macro dependencies and library dependencies. This functionality exists so that you
+can define the dependencies directly in the library files, and then just include a single
+macro or library in the script that implements the library/macro and have all the correct
+functionality. See the note below for additional information on this!</P>
+<P>Use: <CODE>m4_dep([macro name])</CODE> for macro dependencies, and <CODE>m4_lib_dep([library name])</CODE> for 
+library dependencies. The library name DOES NOT take the .m4 extension. 
+The end result is that the dependency information is only loaded once.</P>
+<P><STRONG>NOTE:</STRONG> The library dependency DOES NOT work. This is due to a quoting issue. The way the macro
+is written currently, the m4_include is inside a quoted block. This throws off the quoting of all
+the included macros, since they treated as double-quoted. (At least this is how I am interpreting
+it at this time. For this reason, just use <CODE>m4_include</CODE>s to load external libraries.</P>
+<P>If you want to use this functionality, you have to <CODE>m4_include(dep.m4)</CODE> before calling
+it's functions.</P>
+<P>BEWARE that you don't change quotes to the multiples in a library that is called. This will set
+off m4 recursion, and it will take a while to die. I.e. DO NOT:</P>
+<PRE>
+ file1.m4
+   m4_changequote([,])
+   m4_lib_dep(file2)</PRE>
+<PRE>
+ file2.m4
+   m4_changequote([[[,]]])
+   ...</PRE>
+<P>This WILL NOT work, and there is no workaround at this time!</P>
+<P>The dep.m4 library is *special* in the sense that it defines additions to the m4 base set
+of macros. Unless you are specifically augmenting or changing the dependency functionality,
+there is no reason to directly edit this file.</P>
+<P>There is also a <CODE>m4_req</CODE> function that is used to specify required variables. This is used to specify
+variables that are <STRONG>required</STRONG> to get a function to compile. If the variables are not specified, then
+the m4 compilation will crash letting you know what variable needs to be specified:</P>
+<P>It is implemented in a library like this:</P>
+<PRE>
+ m4_define([DB_GETDBCONNECTION],[
+ m4_dep([DB_GLOBALS])
+ m4_dep([DB_ENDDBCONNECTION])
+ m4_dep([DB_DBERROROUT])
+ m4_req([username])
+ m4_req([password])
+ Function GetDBConnection(ServerName, DBName)
+        UserName = &quot;GLOBAL_VAR([username])&quot;
+        Password = &quot;GLOBAL_VAR([password])&quot;
+ End Function</PRE>
+<P>It is implemented in the calling script like this:</P>
+<PRE>
+ GLOBAL_VAR(username,jrenwick)
+ GLOBAL_VAR(password,jrenwick)</PRE>
+<P>On a side note, the reason this exists is to avoid 
+nesting the argument calls to different macros.
+After looking at this stuff for a while, and doing things like,</P>
+<PRE>
+ m4_define([foo],[$1 = something and macro bar returns: bar($*)])
+ m4_define([bar],[shift($*)])</PRE>
+<P>which is confusing enough at 1 level let alone 2 or 
+three, or appending variables to loops, etc...
+It became clear that it was best for macros to 
+specify global variables that they depended on.</P>
+<P>The difference between an <CODE>m4_req</CODE> and and 
+<CODE>m4_dep</CODE> is that a req will die with errors, a dep will
+continue on without complaining. Since a variable 
+is just a macro, you can use either dep
+or req to pull in both variables and other macros. 
+This is handy when you want to override macros
+depending on the language or platform that is being implemented. 
+The other difference is that <CODE>m4_dep</CODE> sets a global variable: <CODE>_[MACRONAME]_loaded</CODE>
+equal to ``1''. This can be used to check if a library is being implemented, 
+and incorporate code specific to that library, i.e.</P>
+<PRE>
+ m4_define([foo],[Age Functionality ...])
+ m4_define([bar],[
+  m4_dep(foo)
+  Main Processing ...
+  m4_ifelse(_foo_loaded,1,
+   [Main processing code that is specific to foo ...])
+ ])</PRE>
+<P>Again, this avoids nesting variables, and it allows a global way to 
+tie together all the custom library functionality.</P>
+<P>
+<H2><A NAME="gotcha m4 variable names">GOTCHA M4 VARIABLE NAMES</A></H2>
+<P>The following variable names are all defined in the make env:</P>
+<PRE>
+ export SYSTEM          =       
+ export platform        =       $(shell uname)
+ export SHELL           =       bash
+ export ECHO            =       echo
+ export BSDECHO         =       $(ECHO) -n
+ export ATTECHO         =       $(ECHO)
+ export CPP             =       cpp
+ export M4              =       m4
+ export PERL            =       perl
+ CC             =       gcc
+ RM             =       /bin/rm</PRE>
+<P>Be careful when specifying these values in scripts with 
+M4_VARIABLES. If there is a space in 
+a command (as is the case with $BSDECHO), you will find 
+that your m4 conversions are failing.
+This is because the ``-n'' shows up as a separate argument 
+to m4 on the commandline.</P>
+<P>In this situation, you need to use single or double quotes to enclose the char on the commandline.</P>
+<P>
+<H2><A NAME="test functions">TEST FUNCTIONS</A></H2>
+<P>You *should* implement a macro that tests all the macros in your library. The naming convention
+for this is: <CODE>_[LIBRARYNAME]_TEST</CODE> in all uppercase.</P>
+<P>When the test infrastructure is run against the library, it will be parsed with the following
+syntax similar to:
+<CODE>$ echo -e &quot;m4_include([LIBRARYNAME].m4)\n\n _[LIBRARYNAME]_TEST&quot; | m4 --prefix-builtins --include=/
+home/jrenwick/work/ListGen/CodeGenerator/m4</CODE></P>
+<P>This results in the output being written to stdout. The output can be compared (cmp) against 
+the expected results.</P>
+<P>See the test infrastructure docs for more information on setting up and running tests.</P>
+<P>
+<H2><A NAME="structure">STRUCTURE</A></H2>
+<P>Of course, any structure that you can think of can be used. :) However, the current m4 pathing information
+points only to the root m4 libraries. Therefore, if you know that you are going to want to break up your
+libraries into sub libraries, then follow the perl standard for library naming. That is, a file at the root
+with the name, libraryname.m4 and a folder with the name, libraryname. Then inside the folder, add all your
+additional libraries, and make sure to reference the correct path from your top level library. 
+A sample of the top level library file may be:</P>
+<PRE>
+ m4_divert(-1)m4_dnl
+ m4_include(dep.m4)
+ # this file is a wrapper around the Windows specific libraries. You only need to
+ # reference this 1 file to get all the functionality
+ m4_include(Windows/VBS/dbaccess.m4)
+ m4_include(Windows/VBS/scm.m4)
+ m4_include(Windows/VBS/vbfilemanip.m4)
+ m4_include(Windows/VBS/vbscript.m4)
+ m4_include(Windows/VBS/windows.m4)
+ m4_changequote(&lt;+++,+++&gt;)
+ m4_changequote([,])
+ m4_divert</PRE>
+<P>This structure is recursive and should be used as a guideline to help structure libraries for your
+projects. To date, I haven't seen a library that loads enough sub libraries and macros to put a 
+significant load on m4. If performance becomes an issue, consider sub dividing the top level libs.</P>
+<P>
+<H2><A NAME="overriding macros">OVERRIDING MACROS</A></H2>
+<P>This is where things get interesting. Once you know what macros are available, you can change
+them at compile time by calling <CODE>m4_pushdef</CODE> to alter the macro definition. Following is
+a list of macros that it makes sense to do this with...</P>
+<PRE>
+ _ECHO : Defaults to &quot;Response.Write&quot; from the Windows.m4 library include.
+         Other interesting values may be &quot;Wscript.Echo&quot;</PRE>
+<PRE>
+ _REQUEST(var) : Defaults to &quot;CommandLineArgs(&quot;var&quot;)&quot; from the Windows.m4 library include.
+         Other interesting values may be &quot;Wscript.Arguments(&quot;var&quot;)&quot; or &quot;Request(&quot;var&quot;)&quot;</PRE>
+<PRE>
+ _END : Defaults to &quot;Wscript.Quit&quot; from the Windows.m4 library include.
+         Other interesting values may be &quot;Response.End&quot;</PRE>
+<PRE>
+ _BUFFER : m4_pushdef([_BUFFER],[m4_dep(LIB_COMMANDLINEARGS)])
+         Other interesting values may be &quot;Response.Buffer = False&quot;</PRE>
+<PRE>
+ _SCRIPT_HEADER : m4_pushdef([_SCRIPT_HEADER],[])
+         Other interesting values may be &quot;&lt;%@language=vbs%&gt;&lt;%&quot;</PRE>
+<PRE>
+ _SCRIPT_FOOTER : m4_pushdef([_SCRIPT_FOOTER],[])
+         Other interesting values may be &quot;%&gt;&quot;</PRE>
+<P>The following formatting directives are also available:</P>
+<PRE>
+ m4_pushdef([_PARA_START],[])
+ m4_pushdef([_PARA_END],[vbNewLine])
+ m4_pushdef([_TABLE_START],[])
+ m4_pushdef([_TABLE_END],[vbNewLine])
+ m4_pushdef([_HEADERROW_START],[&quot;   &quot;])
+ m4_pushdef([_HEADERROW_END],[])
+ m4_pushdef([_ROW_START],[])
+ m4_pushdef([_ROW_END],[vbNewLine])
+ m4_pushdef([_CELL_START],[&quot;   &quot;])
+ m4_pushdef([_CELL_END],[])</PRE>
+<P>Formatting is defined internal to a macro with:</P>
+<PRE>
+ m4_define([B_APPEND],[m4_ifelse($1,,[$1],[$1 $2])])
+ m4_define([F_APPEND],[m4_ifelse($1,,[$1],[$2 $1])])</PRE>
+<P>I.E.:</P>
+<PRE>
+ SQLToTable = SQLToTable F_APPEND(_TABLE_START,&amp;) &amp; &quot;&quot; F_APPEND( _ROW_START,&amp;)</PRE>
+<P>OR</P>
+<PRE>
+ SQLToTable = SQLToTable F_APPEND(_ROW_END,&amp;)</PRE>
+
+</BODY>
+
+</HTML>

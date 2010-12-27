@@ -1,0 +1,73 @@
+# -*-makefile-*-
+# $m80path = [{ command => 'embedperl' }]
+
+<:
+use Data::Dumper;
+
+sub make_suffix_rules {
+    my $o = '';
+    for my $k (keys %main::template_definition) {
+        $rhtype = \%{ $main::template_definition{$k} };
+        $o .= "\%.$rhtype->{extension1} : \%.$rhtype->{extension1}.$rhtype->{extension2}\n";
+#        $o .= "\tchmod u+w \$@\n";
+        $o .= "\tenv M4DEBUG=\"\$(M4DEBUG)\" runPath \${DEBUG} -file \$< -dest \$\@\n\n";
+	$o .= "$rhtype->{extension1}$rhtype->{extension2}files = \$(patsubst \%.$rhtype->{extension1}.$rhtype->{extension2},\%.$rhtype->{extension1},\$(wildcard *.$rhtype->{extension1}.$rhtype->{extension2}))\n";
+        $o .= "\n\n";
+    }
+    return $o;
+}
+
+sub gen_filelist {
+    my $o = "@_";
+    for my $k (keys %main::template_definition) {
+        $rhtype = \%{ $main::template_definition{$k} };
+	if ($rhtype->{expansion_time} !~ /runtime/i) {
+	     $o .= " \$($rhtype->{extension1}$rhtype->{extension2}files)";
+        }
+    }
+    return $o;
+
+}
+
+sub gen_runtime_filelist {
+    my $o = "@_";
+    for my $k (keys %main::template_definition) {
+        $rhtype = \%{ $main::template_definition{$k} };
+	if ($rhtype->{expansion_time} =~ /runtime/i) {
+	     $o .= " \$($rhtype->{extension1}$rhtype->{extension2}files)";
+        }
+    }
+    return $o;
+
+}
+:>
+
+#
+# The m4 command that is run by m80path is derived from m80standalone.mk and local.mk
+# (in the `m80 --libpath`/make directory). That file allows 1 m4 variable to be 
+# derived from the ENV, the $M4DEBUG variable. The following line makes sure that
+# out localDSL and DSL file get added to the overall m4 command.
+#
+
+M80LIB=$(shell m80 --libpath)
+
+localHeadRules=$(wildcard localHead.mk)
+ifneq ($(localHeadRules),)
+include localHead.mk
+endif
+
+include $(M80LIB)/make/m80generic.mk
+
+<:=&make_suffix_rules():>
+
+all build deploy :: <:=gen_filelist('module.xml'):> <:=gen_runtime_filelist():>
+
+#
+# The following loads local make rules.  Use this local file
+# for rules, as editing this file could cause your rules to be overwritten.
+#
+
+localTailRules=$(wildcard localTail.mk)
+ifneq ($(localTailRules),)
+include localTail.mk
+endif

@@ -1,0 +1,53 @@
+$files = {};
+$expr_list = [
+               {
+                 'expr' => '$parseState',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$perl',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$yytoken',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$yytext',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$yyleng',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$yymatch',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$_yyread',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$matchtext',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$yyin',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$object',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$flex',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$ref',
+                 'depth' => -1
+               }
+             ];
+$eval_saved_text = undef;
+$main_win_geometry = '1605x1024+0+26';

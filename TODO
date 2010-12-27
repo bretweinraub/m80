@@ -1,0 +1,38 @@
+2003-04-18  Bret Weinraub  <bweinraub@beavis>
+
+	* autofiles/libs.mk (install-dist_pkgdataDATA): These rules shouldn't be needed if 
+	we can successfully make pkgdatadir+= work (and not insert a /
+
+2003-04-17  Bret Weinraub  <bweinraub@ldonovan.netzero.net>
+
+	* missing src/Makefile.in
+
+2003-04-12  Bret Weinraub  <bweinraub@beavis>
+
+	* the shell.m4 rule in lib/shell doesn't work :(
+
+2003-04-11  Bret Weinraub  <bweinraub@beavis>
+
+	* shell snippets in /lib/shell could really be turned into macros
+	and consolidated into a single file.
+
+2003-04-10  Bret Weinraub  <bweinraub@beavis>
+
+	*  (BDW): In configure.in, there is redundant checks validating
+	that GNU m4/make is availible.  This should really be a single
+	check.  Need a modified AC_PATH_PROG() macro to do this.
+
+2003-04-07  Bret Weinraub  <bweinraub@beavis>
+
+	*  (BDW): call/email J Steele about the fixed IP deal.
+	
+
+BDW : 4.4.03
+
+- new name.  m80 is taken
+
+- "script launcher" ; I think the most efficient way to "launch" m80
+  utilities (or whatever we call this) is to create a single script
+  (program :D) that will launch the required script.  In this way only
+  one program has to be installed in /usr/local/bin.
+
