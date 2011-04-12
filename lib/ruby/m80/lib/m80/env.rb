@@ -89,7 +89,7 @@ module M80
         ckebug 1, "database_name is #{database_name}"
 
         raise "no DATABASE_NAME found in your m80 environment" if
-          database_name.length < 1 
+          ! database_name or database_name.length < 1 
 
         raise "cannot parse database credentials from #{database_name}" unless
           creds = database_name.match(/([a-z0-9A-Z_\-]*)\/([a-z0-9A-Z_\-]*)@([a-z0-9A-Z]*)/)

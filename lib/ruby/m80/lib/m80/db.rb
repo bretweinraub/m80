@@ -3,8 +3,10 @@ require 'sequel'
 require 'ckuru-tools'
 require 'ruby-debug'
 begin
-#  require 'oci8'
-rescue 
+  require 'oci8'
+rescue Exception => e
+  ckebug 0, "requiring oci8 throws: #{e}"
+  raise e
 end
 
 module M80
@@ -53,20 +55,56 @@ module M80
 
   def self.sys_connect(*args)
     hash = args.length > 0 ? args[0] : {}
-    
+    if ENV['SYSTEM_PASSWORD']
+      ckebug 0, "using a system password from the environment"
+    end
+
     sys_pass = hash[:system_password] || ENV['SYSTEM_PASSWORD'] || 'database'
     m80env = (hash ? hash[:m80env] : nil) || M80::Env.new
 
     begin
       conn = OCI8.new('system',sys_pass,m80env.sid)
     rescue Exception => e
-      ckebug 0, "Failed to connect to 'system@#{m80env.sid}'.  The most common source of this problem is you need to set SYSTEM_PASSWORD (via the environment) to the correct value for this database"
+      ckebug 0, <<EOF
+Failed to connect to 'system@#{m80env.sid}'.  
+
+The most common source of this problem is you need to set SYSTEM_PASSWORD (via the environment) to the correct value for this database.
+
+If you are setting this in your m80 environment, try
+
+mexec (or m80 --execute) 
+
+on the command you ran.
+
+Check the error below for more information:
+EOF
       raise e
     end
     conn
   end
 
-  def self.create_user(h)
+  def self.create_tablespace(h={})
+    unless m80env = h[:m80env]  || M80::Env.new(h) 
+      raise "cannot initialize m80 environment"
+    end
+
+    if conn = M80.sys_connect(:m80env => m80env)
+      ckebug 0, "found system connection #{conn.inspect}"
+
+      default_tablespace = "APP_DATA"
+
+      begin
+        conn.exec <<EOF
+        CREATE TABLES
+EOF
+      rescue Exception => e
+        puts e.inspect
+      end
+    end
+  end
+      
+
+  def self.create_user(h={})
     unless m80env = h[:m80env]  || M80::Env.new(h) 
       raise "cannot initialize m80 environment"
     end
@@ -80,7 +118,6 @@ module M80
         conn.exec <<EOF
         CREATE USER #{m80env.user}
         IDENTIFIED BY #{m80env.password}
-        DEFAULT TABLESPACE #{default_tablespace}
         TEMPORARY TABLESPACE TEMP
 EOF
       rescue Exception => e
